@@ -1,0 +1,6 @@
+name: amazon-storms-aerosols
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3.*
