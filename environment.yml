@@ -4,3 +4,7 @@ channels:
 - defaults
 dependencies:
 - python=3.*
+- jupyter
+- arm_pyart
+- cartopy
+- h5py
