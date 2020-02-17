@@ -4,6 +4,7 @@ Testing basic TINT functionality
 @author: Camila Lopes (camila.lopes@iag.usp.br)
 """
 
+#%%
 import glob
 import tempfile
 import os
@@ -24,6 +25,7 @@ import pyart
 from tint import Cell_tracks, animate
 from tint.visualization import lagrangian_view, full_domain
 
+import custom_cbars
 
 def ppi_to_grid(filename):
     
@@ -54,7 +56,8 @@ def plot_basic_ppi(filename, filedate):
     ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
     display = pyart.graph.RadarMapDisplay(radar)
     display.plot_ppi_map(
-        'corrected_reflectivity', sweep=0, vmin=10, vmax=70, ax=ax,
+        'corrected_reflectivity', sweep=0, vmin=0, vmax=70,
+        ax=ax, cmap='dbz',
         shapefile=path + 'data/general/shapefiles/lineaire_1km',
         shapefile_kwargs={
             'facecolor': '', 'edgecolor': 'darkblue', 'alpha': 0.5,
@@ -74,12 +77,15 @@ def plot_basic_ppi(filename, filedate):
     gl.yformatter = LATITUDE_FORMATTER
 
     plt.savefig(
-        path + 'tracking/figs/Z_0_9_' + filedate.strftime('%Y%m%d%H%M%S') + 
+        path + 'tracking/figs/dbz/Z_0_9_' + filedate.strftime('%Y%m%d%H%M%S') + 
         '.png', bbox_inches='tight'
         )
 
+    print('Plotted!' + str(filedate))
+
     del radar, display
 
+#%%
 # Getting radar files
 path = '/home/camila/git/amazon-storms-aerosols/'
 filenames = glob.glob(
@@ -108,40 +114,41 @@ del filenames
 #         p = p + 1
 #         files['period'] = 'p' + str(p)
 
-# Generating gif of all files
-# fig = plt.figure(figsize=(8, 7))
-# ppi_anim = FuncAnimation(
-#     fig, plot_basic_ppi, frames=files['filename'], interval=500)
-# ppi_anim.save(path + 'tracking/test.gif', writer='imagemagick')
-
-
+#%%
 # Generating png figures and zipping them
+# files = files.iloc[3424:]
 # for file, date in zip(files.filename, files.date):
 #     fig = plt.figure(figsize=(8, 7))
 #     plot_basic_ppi(file, date)
 # with tarfile.open(path + 'tracking/figs/Z_0_9.tar.gz', 'w:gz') as tar:
 #     tar.add(path + 'tracking/figs', arcname='.')
+# Generating gif of all files
+# fig = plt.figure(figsize=(8, 7))
+# ppi_anim = FuncAnimation(
+#     fig, plot_basic_ppi, frames=files['filename'][3066:], interval=500)
+# ppi_anim.save(path + 'tracking/test_sep2014.gif', writer='imagemagick')
 
 # TESTING
-
+#%%
 # - Separating test period
 subfiles = files.iloc[51:107]
 
+#%%
 # - Converting to grids
 
 # -- quick test
-# test = ppi_to_grid(subfiles['filename'][55])
+# test = ppi_to_grid(subfiles['filename'][3130])
 # fig = plt.figure()
 # display = pyart.graph.GridMapDisplay(test)
-# display.plot_grid('corrected_reflectivity', 19, vmin=10, vmax=70)
+# display.plot_grid('corrected_reflectivity', 1, vmin=10, vmax=70)
 
 # - Writing grids (run only once!)
 # grids = [ppi_to_grid(f) for f in subfiles['filename']]
 
+#%%
 # - Tracking
 tracks_obj = Cell_tracks(field='corrected_reflectivity')
 print(tracks_obj.params)
-# tracks_obj.params['FIELD_THRESH'] = 25
 
 # -- Reading generated grids (faster than converting/tracking)
 grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
@@ -149,14 +156,15 @@ tracks_obj.get_tracks(grids)
 # -- Results
 tracks_obj.tracks.head(10)
 
+#%%
 # - Plotting results
-grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
-full_domain(
-    tracks_obj, grids, path + 'tracking/figs/test/full_domain_32dbz',
-    vmin=10, vmax=70, 
-    lon_lines=np.arange(-62.5, -56.5, 1), lat_lines=np.arange(-5.5, 0.5, 1),
-    tracers=True
-)
+# grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
+# full_domain(
+#     tracks_obj, grids, path + 'tracking/figs/test/full_domain_32dbz',
+#     vmin=0, vmax=70, 
+#     lon_lines=np.arange(-62.5, -56.5, 1), lat_lines=np.arange(-5.5, 0.5, 1),
+#     tracers=True
+# )
 # -- Save in .mp4
 # animate(
 #     tracks_obj, grids, path + 'tracking/figs/tracking_anim',
@@ -164,18 +172,22 @@ full_domain(
 #     lon_lines=np.arange(-62.5, -56.5, 1), lat_lines=np.arange(-5.5, 0.5, 1),
 #     tracers=True
 # )
-
+#%%
 # - Longer cells
-tracks_obj.tracks.groupby(level='uid').size().sort_values(ascending=False)[:5]
-
+# tracks_obj.tracks.groupby(level='uid').size().sort_values(ascending=False)[:5]
+#%%
 # - Lagrangian view of one of the cells
 grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
 lagrangian_view(
-    tracks_obj, grids, path + 'tracking/figs/test/lagrangian_cell104_32dbz',
-    uid='104', vmin=10, vmax=70
+    tracks_obj, grids, path + 'tracking/figs/test/lagrangian_cell88_32dbz',
+    uid='88', vmin=0, vmax=70, cmap='dbz', alt=1000
 )
 # -- Save in .mp4
 # animate(
 #     tracks_obj, grids, path + 'tracking/figs/lagrangian_anim_cell88_32dbz',
 #     style='lagrangian', uid='88', alt=2000, vmin=10, vmax=70
 # )
+
+
+
+# %%
