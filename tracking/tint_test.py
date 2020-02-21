@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
+import netCDF4
+
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML, Image, display
@@ -26,6 +28,7 @@ from tint import Cell_tracks, animate
 from tint.visualization import lagrangian_view, full_domain
 
 import custom_cbars
+from read_sipam_cappis import read_grid
 
 def ppi_to_grid(filename):
     
@@ -46,50 +49,62 @@ def ppi_to_grid(filename):
 
     return grid
 
-def plot_basic_ppi(filename, filedate):
+def plot_basic_ppi(filename, filedate, file_extension):
     """
 
     """
-    radar = pyart.aux_io.read_gamic(filename)
+    if file_extension == '.HDF5':
+        radar = pyart.aux_io.read_gamic(filename)
+    else:
+        radar = read_grid(filename, exclude_fields=['origin_altitude'])
+        # radar = netCDF4.Dataset(filename, mode='r')
+        # print(radar.variables.keys())
+        # print(radar.variables.items())
+        # print(radar.variables['grid_mapping_0'].latitude_of_projection_origin)
+        # radar = pyart.io.read_grid(filename)
 
-    plt.clf()
-    ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-    display = pyart.graph.RadarMapDisplay(radar)
-    display.plot_ppi_map(
-        'corrected_reflectivity', sweep=0, vmin=0, vmax=70,
-        ax=ax, cmap='dbz',
-        shapefile=path + 'data/general/shapefiles/lineaire_1km',
-        shapefile_kwargs={
-            'facecolor': '', 'edgecolor': 'darkblue', 'alpha': 0.5,
-            'linewidth': 0.75
-            }
-        )
-    ax.add_geometries(
-            Reader(path + 'data/general/shapefiles/estadosl_2007').geometries(),
-            ccrs.PlateCarree(), linewidth=0.75, facecolor='', edgecolor='gray'
-            )
-    gl = ax.gridlines(
-            crs=ccrs.PlateCarree(), draw_labels=True,
-            xlocs=np.arange(-70, -50, 1), ylocs=np.arange(-10, 1, 1)
-            )
-    gl.xlabels_top = gl.ylabels_right = False
-    gl.xformatter = LONGITUDE_FORMATTER
-    gl.yformatter = LATITUDE_FORMATTER
+    # plt.clf()
+    # ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+    # display = pyart.graph.RadarMapDisplay(radar)
+    # display.plot_ppi_map(
+    #     'corrected_reflectivity', sweep=0, vmin=0, vmax=70,
+    #     ax=ax, cmap='dbz',
+    #     shapefile=path + 'data/general/shapefiles/lineaire_1km',
+    #     shapefile_kwargs={
+    #         'facecolor': '', 'edgecolor': 'darkblue', 'alpha': 0.5,
+    #         'linewidth': 0.75
+    #         }
+    #     )
+    # ax.add_geometries(
+    #         Reader(path + 'data/general/shapefiles/estadosl_2007').geometries(),
+    #         ccrs.PlateCarree(), linewidth=0.75, facecolor='', edgecolor='gray'
+    #         )
+    # gl = ax.gridlines(
+    #         crs=ccrs.PlateCarree(), draw_labels=True,
+    #         xlocs=np.arange(-70, -50, 1), ylocs=np.arange(-10, 1, 1)
+    #         )
+    # gl.xlabels_top = gl.ylabels_right = False
+    # gl.xformatter = LONGITUDE_FORMATTER
+    # gl.yformatter = LATITUDE_FORMATTER
 
-    plt.savefig(
-        path + 'tracking/figs/dbz/Z_0_9_' + filedate.strftime('%Y%m%d%H%M%S') + 
-        '.png', bbox_inches='tight'
-        )
+    # plt.savefig(
+    #     path + 'tracking/figs/dbz/' + file_level + 'dbZ_' + 
+    #     filedate.strftime('%Y%m%d%H%M%S') + '.png', bbox_inches='tight'
+    #     )
 
-    print('Plotted!' + str(filedate))
+    # print('Plotted!' + str(filedate))
 
-    del radar, display
+    # del radar, display
 
 #%%
 # Getting radar files
 path = '/home/camila/git/amazon-storms-aerosols/'
+file_level = 'level_2/'
+file_ext = '.nc'
+
 filenames = glob.glob(
-    path + 'data/radar/sipam_manaus/arm/' + '**/*.HDF5', recursive=True)
+    path + 'data/radar/sipam_manaus/arm/' + file_level + '**/*' + file_ext,
+     recursive=True)
 print("number of radar files: " + str(len(filenames)))
 
 files = pd.DataFrame(filenames, columns=['filename'])
@@ -97,7 +112,7 @@ files['date'] = pd.to_datetime(
     files['filename'].str.extract('RADL080617(\d{14})')[0], 
     format='%Y%m%d%H%M%S'
     )
-files['filegrids'] = files['filename'].str.slice_replace(start=-5, repl='_grid.nc')
+files['filegrids'] = files['filename'].str.replace(file_ext, '_grid.nc')
 files = files.sort_values('date').reset_index(drop=True)
 del filenames
 
@@ -116,10 +131,10 @@ del filenames
 
 #%%
 # Generating png figures and zipping them
-# files = files.iloc[3424:]
-# for file, date in zip(files.filename, files.date):
-#     fig = plt.figure(figsize=(8, 7))
-#     plot_basic_ppi(file, date)
+files = files.iloc[18:20]
+for file, date in zip(files.filename, files.date):
+    fig = plt.figure(figsize=(8, 7))
+    plot_basic_ppi(file, date, file_ext)
 # with tarfile.open(path + 'tracking/figs/Z_0_9.tar.gz', 'w:gz') as tar:
 #     tar.add(path + 'tracking/figs', arcname='.')
 # Generating gif of all files
@@ -131,7 +146,7 @@ del filenames
 # TESTING
 #%%
 # - Separating test period
-subfiles = files.iloc[51:107]
+# subfiles = files.iloc[51:107]
 
 #%%
 # - Converting to grids
@@ -147,14 +162,14 @@ subfiles = files.iloc[51:107]
 
 #%%
 # - Tracking
-tracks_obj = Cell_tracks(field='corrected_reflectivity')
-print(tracks_obj.params)
+# tracks_obj = Cell_tracks(field='corrected_reflectivity')
+# print(tracks_obj.params)
 
 # -- Reading generated grids (faster than converting/tracking)
-grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
-tracks_obj.get_tracks(grids)
+# grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
+# tracks_obj.get_tracks(grids)
 # -- Results
-tracks_obj.tracks.head(10)
+# tracks_obj.tracks.head(10)
 
 #%%
 # - Plotting results
@@ -177,11 +192,11 @@ tracks_obj.tracks.head(10)
 # tracks_obj.tracks.groupby(level='uid').size().sort_values(ascending=False)[:5]
 #%%
 # - Lagrangian view of one of the cells
-grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
-lagrangian_view(
-    tracks_obj, grids, path + 'tracking/figs/test/lagrangian_cell88_32dbz',
-    uid='88', vmin=0, vmax=70, cmap='dbz', alt=1000
-)
+# grids = (pyart.io.read_grid(f) for f in subfiles['filegrids'])
+# lagrangian_view(
+#     tracks_obj, grids, path + 'tracking/figs/test/lagrangian_cell88_32dbz',
+#     uid='88', vmin=0, vmax=70, cmap='dbz', alt=1000
+# )
 # -- Save in .mp4
 # animate(
 #     tracks_obj, grids, path + 'tracking/figs/lagrangian_anim_cell88_32dbz',
