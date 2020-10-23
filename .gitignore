@@ -1,4 +1,14 @@
 data/radar/
+
+general_processing/figs/
+
+radar_processing/figs/
+radar_processing/__pycache__/
+
+tracking/figs/
+tracking/__pycache__/
+
 .vscode/
 
-radar_processing/client_secrets.json
+.Rproj.user
+.Rhistory
