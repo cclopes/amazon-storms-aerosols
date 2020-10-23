@@ -28,7 +28,7 @@ from tint import Cell_tracks, animate
 from tint.visualization import lagrangian_view, full_domain
 
 import custom_cbars
-from read_sipam_cappis import read_grid
+from plot_functions import plot_basic_ppi
 
 def ppi_to_grid(filename):
     
@@ -49,52 +49,6 @@ def ppi_to_grid(filename):
 
     return grid
 
-def plot_basic_ppi(filename, filedate, file_extension):
-    """
-
-    """
-    if file_extension == '.HDF5':
-        radar = pyart.aux_io.read_gamic(filename)
-    else:
-        radar = read_grid(filename, exclude_fields=['origin_altitude'])
-        # radar = netCDF4.Dataset(filename, mode='r')
-        # print(radar.variables.keys())
-        # print(radar.variables.items())
-        # print(radar.variables['grid_mapping_0'].latitude_of_projection_origin)
-        # radar = pyart.io.read_grid(filename)
-
-    # plt.clf()
-    # ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-    # display = pyart.graph.RadarMapDisplay(radar)
-    # display.plot_ppi_map(
-    #     'corrected_reflectivity', sweep=0, vmin=0, vmax=70,
-    #     ax=ax, cmap='dbz',
-    #     shapefile=path + 'data/general/shapefiles/lineaire_1km',
-    #     shapefile_kwargs={
-    #         'facecolor': '', 'edgecolor': 'darkblue', 'alpha': 0.5,
-    #         'linewidth': 0.75
-    #         }
-    #     )
-    # ax.add_geometries(
-    #         Reader(path + 'data/general/shapefiles/estadosl_2007').geometries(),
-    #         ccrs.PlateCarree(), linewidth=0.75, facecolor='', edgecolor='gray'
-    #         )
-    # gl = ax.gridlines(
-    #         crs=ccrs.PlateCarree(), draw_labels=True,
-    #         xlocs=np.arange(-70, -50, 1), ylocs=np.arange(-10, 1, 1)
-    #         )
-    # gl.xlabels_top = gl.ylabels_right = False
-    # gl.xformatter = LONGITUDE_FORMATTER
-    # gl.yformatter = LATITUDE_FORMATTER
-
-    # plt.savefig(
-    #     path + 'tracking/figs/dbz/' + file_level + 'dbZ_' + 
-    #     filedate.strftime('%Y%m%d%H%M%S') + '.png', bbox_inches='tight'
-    #     )
-
-    # print('Plotted!' + str(filedate))
-
-    # del radar, display
 
 #%%
 # Getting radar files
@@ -134,7 +88,7 @@ del filenames
 files = files.iloc[18:20]
 for file, date in zip(files.filename, files.date):
     fig = plt.figure(figsize=(8, 7))
-    plot_basic_ppi(file, date, file_ext)
+    plot_basic_ppi(file, date)
 # with tarfile.open(path + 'tracking/figs/Z_0_9.tar.gz', 'w:gz') as tar:
 #     tar.add(path + 'tracking/figs', arcname='.')
 # Generating gif of all files
