@@ -5,16 +5,15 @@ from zipfile import ZipFile
 def unzip_files(filepath):
     """
     """
-    files = glob(filepath + "*.zip")
-    paths = []
+    file = glob(filepath[:-1] + ".zip")[0]
 
     print("Unzipping files")
-    for file in files:
-        with ZipFile(file, "r") as zip_ref:
-            zip_filenames = zip_ref.namelist()
-            for filename in zip_filenames:
-                if filename.endswith(".mmclx"):
-                    zip_ref.extract(filename, filepath + "temp/")
-        paths.append(glob(filepath + "temp/" + file[-6:-4] + "/*"))
+    with ZipFile(file, "r") as zip_ref:
+        zip_filenames = zip_ref.namelist()
+        for filename in zip_filenames:
+            if filename.endswith(".mmclx"):
+                zip_ref.extract(filename, filepath[:-3] + "temp/")
+
+    paths = glob(filepath[:-3] + "temp/" + file[-6:-4] + "/*")
 
     return paths

@@ -24,7 +24,7 @@ mira = "data/radar/mira_campina/"
 # files = sorted(os.listdir(kazr_md + b1))
 # file_md_b1 = list(filter(lambda date: '20181205.1800' in date, files))[0]
 
-month_day = "06/temp/28/"
+month_day = "07/temp/11/"
 hours = ["11"]  # ["11", "12", "13"]
 ext = "00.mmclx"
 files_mira = []

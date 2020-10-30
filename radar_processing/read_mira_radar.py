@@ -4,6 +4,7 @@
 
 import netCDF4
 import numpy as np
+from skimage.measure import block_reduce
 
 from pyart.io import cfradial
 from pyart.config import FileMetadata
@@ -13,6 +14,8 @@ from pyart.util import join_radar
 
 def read_mira(
     filename,
+    for_quicklooks=False,
+    ql_res=5,
     field_names=None,
     additional_metadata=None,
     file_field_names=False,
@@ -26,6 +29,10 @@ def read_mira(
     ----------
     filename : str
         Name of NetCDF file to read data from.
+    for_quicklooks : bool, optional
+        True if data is for quicklooks, averaging according to ql_res.
+    ql_res : int, optional
+        If for_quicklooks is true, data resolution in minutes.
     field_names : dict, optional
         Dictionary mapping field names in the file names to radar field names.
         Unlike other read functions, fields not in this dictionary or having a
@@ -71,7 +78,13 @@ def read_mira(
     metadata = dict([(k, getattr(ncobj, k)) for k in ncobj.ncattrs()])
     metadata["n_gates_vary"] = "false"
 
-    # 4.2 Dimensions (do nothing)
+    # 4.2 Dimensions
+    # If averaging, increase temporal resolution with res
+    if for_quicklooks:
+        orig_res = round(
+            float(ncobj.hrd[ncobj.hrd.find("AVE") + 4 : ncobj.hrd.find("\nC")])
+        )
+        res = round(ql_res * 60 / orig_res)
 
     # 4.3 Global variable -> move to metadata dictionary
     if "volume_number" in ncvars:
@@ -95,8 +108,12 @@ def read_mira(
     # 4.4 coordinate variables -> create attribute dictionaries
     time = cfradial._ncvar_to_dict(ncvars["time"])
     time["units"] = "seconds since 1970-01-01 00:00:00"
-    time["data"] = np.array(np.ma.MaskedArray.tolist(time["data"]), dtype="int64")
+    time["data"] = np.array(
+        np.ma.MaskedArray.tolist(time["data"]), dtype="int64"
+    )
     _range = cfradial._ncvar_to_dict(ncvars["range"])
+    if for_quicklooks:
+        time["data"] = time["data"][::res]
 
     # 4.5 Ray dimension variables
 
@@ -163,7 +180,9 @@ def read_mira(
     sweep_start_ray_index["data"] = np.array([0], dtype=np.int32)
 
     sweep_end_ray_index = filemetadata("sweep_end_ray_index")
-    sweep_end_ray_index["data"] = np.array([ncvars["time"].size - 1], dtype=np.int32)
+    sweep_end_ray_index["data"] = np.array(
+        [ncvars["time"].size - 1], dtype=np.int32
+    )
 
     # first sweep mode determines scan_type
     # this module is specific to vertically-pointing data
@@ -194,6 +213,18 @@ def read_mira(
                 continue
             field_name = key
         fields[field_name] = cfradial._ncvar_to_dict(ncvars[key])
+        if for_quicklooks:
+            fields[field_name]["data"] = block_reduce(
+                fields[field_name]["data"],
+                block_size=(res, 1),
+                func=np.nanmean,
+                cval=1e20,
+            )
+        if field_name in ("SNRg", "SNR", "Ze", "Zg", "Z", "LDRg", "LDR"):
+            fields[field_name]["data"] = 10 * np.log10(
+                fields[field_name]["data"]
+            )
+            fields[field_name]["units"] = "dBZ"
 
     # 4.5 instrument_parameters sub-convention -> instrument_parameters dict
     # this section needed multiple changes and/or additions since the
@@ -212,7 +243,9 @@ def read_mira(
 
     v_nq = float(ncvars["NyquistVelocity"][:])
     nyquist_velocity = filemetadata("nyquist_velocity")
-    nyquist_velocity["data"] = (v_nq * np.ones(ncvars["time"].size, dtype=np.float32),)
+    nyquist_velocity["data"] = (
+        v_nq * np.ones(ncvars["time"].size, dtype=np.float32),
+    )
     samples = int(ncvars["nave"][:])
     n_samples = filemetadata("n_samples")
     n_samples["data"] = samples * np.ones(ncvars["time"].size, dtype=np.int32)
@@ -239,22 +272,42 @@ def read_mira(
         "long_name": ncvars["MeltHei"].long_name,
         "units": ncvars["MeltHei"].units,
         "yrange": ncvars["MeltHei"].yrange,
-        "data": ncvars["MeltHei"][:],
     }
     melthei_det = {
         "var": "MeltHeiDet",
         "long_name": "Melting Layer Height detected from LDR",
         "units": ncvars["MeltHeiDet"].units,
         "yrange": ncvars["MeltHeiDet"].yrange,
-        "data": ncvars["MeltHeiDet"][:],
     }
     melthei_db = {
         "var": "MeltHeiDB",
         "long_name": ncvars["MeltHeiDB"].long_name,
         "units": ncvars["MeltHeiDB"].units,
         "yrange": ncvars["MeltHeiDB"].yrange,
-        "data": ncvars["MeltHeiDB"][:],
     }
+    if for_quicklooks:
+        melthei["data"] = block_reduce(
+            ncvars["MeltHei"][:],
+            block_size=(res,),
+            func=np.nanmean,
+            cval=np.nanmean(ncvars["MeltHei"][:]),
+        )
+        melthei_det["data"] = block_reduce(
+            ncvars["MeltHeiDet"][:],
+            block_size=(res,),
+            func=np.nanmean,
+            cval=np.nanmean(ncvars["MeltHeiDet"][:]),
+        )
+        melthei_db["data"] = block_reduce(
+            ncvars["MeltHeiDB"][:],
+            block_size=(res,),
+            func=np.nanmean,
+            cval=np.nanmean(ncvars["MeltHeiDB"][:]),
+        )
+    else:
+        melthei["data"] = ncvars["MeltHei"][:]
+        melthei_det["data"] = ncvars["MeltHeiDet"][:]
+        melthei_db["data"] = ncvars["MeltHeiDB"][:]
 
     # close NetCDF object
     ncobj.close()
@@ -282,7 +335,7 @@ def read_mira(
     )
 
 
-def read_multi_mira(filenames):
+def read_multi_mira(filenames, for_quicklooks=False, ql_res=5):
     """
     Read and join multiple MIRA-35C radar files
     
@@ -296,9 +349,9 @@ def read_multi_mira(filenames):
     radar : Py-ART radar object
     """
 
-    radar, melt_hei = read_mira(filenames[0])
+    radar, melt_hei = read_mira(filenames[0], for_quicklooks, ql_res)
     for i in range(1, len(filenames)):
-        radar_i, melt_hei_i = read_mira(filenames[i])
+        radar_i, melt_hei_i = read_mira(filenames[i], for_quicklooks, ql_res)
         radar = join_radar(radar, radar_i)
         for j in range(3):
             melt_hei[j]["data"] = np.ma.append(
