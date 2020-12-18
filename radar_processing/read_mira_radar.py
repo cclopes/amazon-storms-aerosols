@@ -338,7 +338,7 @@ def read_mira(
 def read_multi_mira(filenames, for_quicklooks=False, ql_res=5):
     """
     Read and join multiple MIRA-35C radar files
-    
+
     Parameters
     ----------
     filenames : list of filenames

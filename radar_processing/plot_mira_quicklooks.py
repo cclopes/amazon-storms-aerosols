@@ -16,6 +16,9 @@ def read_plot_mira_quicklooks(filenames, save_path="figs/", res=5):
         filenames, for_quicklooks=True, ql_res=res
     )
 
+    # Checking if transmit power is on
+    if mira
+
     # Grabbing date from MIRA file
     date = pyart.util.datetimes_from_radar(mira)[0]
 
@@ -79,39 +82,6 @@ def read_plot_mira_quicklooks(filenames, save_path="figs/", res=5):
         vmax=40,
         cmap="pyart_Theodore16",
         figname=save_path + "mira_ze_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="Z",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["Z"]["yrange"][0],
-        vmax=40,
-        cmap="pyart_Theodore16",
-        figname=save_path + "mira_z_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="RR",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["RR"]["yrange"][0],
-        vmax=mira.fields["RR"]["yrange"][1],
-        cmap="pyart_RRate11",
-        figname=save_path + "mira_rr_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="LWC",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["LWC"]["yrange"][0],
-        vmax=mira.fields["LWC"]["yrange"][1],
-        cmap=None,
-        figname=save_path + "mira_lwc_" + date.strftime("%Y%m%d%H%M%S"),
     )
 
     plot_mira_field(

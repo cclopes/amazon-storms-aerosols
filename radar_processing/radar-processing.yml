@@ -1,0 +1,8 @@
+name: radar-processing
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3.*
+- arm_pyart
+- scikit-image

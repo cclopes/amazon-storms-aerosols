@@ -1,4 +1,6 @@
 data/radar/
+data/radar
+data/radar.lnk
 
 general_processing/figs/
 
@@ -12,3 +14,4 @@ tracking/__pycache__/
 
 .Rproj.user
 .Rhistory
+
