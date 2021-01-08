@@ -54,12 +54,14 @@ if data_path + ql_last + ".zip" in data_files:
 else:
     data_ql = data_files[0]
 
-
 # Fazendo quicklooks de data_ql
 
 # Descompactando os dados
 files = unzip_files(data_ql, data_path)
 if len(files) <= 3:
+    Path(data_path + "quicklooks/" + ql_last + "/").mkdir(
+        parents=True, exist_ok=True
+    )
     sys.exit("Not enough files to plot")
 
 # Plotando os dados

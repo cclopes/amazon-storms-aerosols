@@ -16,9 +16,6 @@ def read_plot_mira_quicklooks(filenames, save_path="figs/", res=5):
         filenames, for_quicklooks=True, ql_res=res
     )
 
-    # Checking if transmit power is on
-    if mira
-
     # Grabbing date from MIRA file
     date = pyart.util.datetimes_from_radar(mira)[0]
 
