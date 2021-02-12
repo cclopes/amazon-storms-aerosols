@@ -4,12 +4,13 @@ Plotting functions for radar data
 @author: Camila Lopes (camila.lopes@iag.usp.br)
 """
 
+import os
 import numpy as np
 from matplotlib import pyplot as plt
+
 import cartopy.crs as ccrs
 from cartopy.io.shapereader import Reader
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-
 import pyart
 import wradlib as wrl
 
@@ -22,10 +23,26 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
 
     """
 
+    # Reading file and generating str for date and level
     radar = pyart.aux_io.read_gamic(filename)
     date = pyart.util.datetime_from_grid(radar)
     str_level = str("%.1f" % radar.fixed_angle["data"][level])
 
+    # Creating directory to save figs
+    save_path = (
+        path
+        + "radar_processing/figs/sipam_ppi/"
+        + date.strftime("%Y-%m")
+        + "/"
+        + str_level
+        + "/"
+    )
+    try:
+        os.makedirs(save_path)
+    except FileExistsError:
+        pass
+
+    # Plotting field
     fig = plt.figure(figsize=(8, 7))
     ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
     display = pyart.graph.RadarMapDisplay(radar)
@@ -44,6 +61,7 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
             "linewidth": 0.75,
         },
     )
+    # Adding rivers
     ax.add_geometries(
         Reader(path + shape_states).geometries(),
         ccrs.PlateCarree(),
@@ -52,6 +70,7 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
         edgecolor="gray",
         alpha=0.8,
     )
+    # Adding shapefile
     gl = ax.gridlines(
         crs=ccrs.PlateCarree(),
         draw_labels=True,
@@ -61,11 +80,13 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
     gl.top_labels = gl.right_labels = False
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
-    display.plot_range_rings([50, 100, 150, 200, 250], ax=ax, col="lightgray", lw=1)
+    display.plot_range_rings(
+        [50, 100, 150, 200, 250], ax=ax, col="lightgray", lw=1
+    )
 
     plt.savefig(
-        path
-        + "radar_processing/figs/sipam_ppi/sipam_"
+        save_path
+        + "sipam_"
         + str_level
         + "_dBZ_"
         + date.strftime("%Y%m%d%H%M%S")
@@ -84,16 +105,33 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
     """
 
     """
+    # Reading file and generating str for date and level
     radar = read_sipam_cappi(filename)
     date = pyart.util.datetime_from_grid(radar)
     str_level = str(radar.z["data"][level] / 1000)
 
+    # Creating directory to save figs
+    save_path = (
+        path
+        + "radar_processing/figs/sipam_cappi/"
+        + date.strftime("%Y-%m")
+        + "/"
+        + str_level
+        + "/"
+    )
+    try:
+        os.makedirs(save_path)
+    except FileExistsError:
+        pass
+
+    # Plotting field
     fig = plt.figure(figsize=(8, 7))
     ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
     display = pyart.graph.GridMapDisplay(radar)
     display.plot_grid(
         "DBZc", level=level, vmin=0, vmax=70, ax=ax, cmap="dbz", embelish=False
     )
+    # Adding rivers
     ax.add_geometries(
         Reader(path + shape_rivers).geometries(),
         ccrs.PlateCarree(),
@@ -102,6 +140,7 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
         edgecolor="darkblue",
         alpha=0.3,
     )
+    # Adding shapefile
     ax.add_geometries(
         Reader(path + shape_states).geometries(),
         ccrs.PlateCarree(),
@@ -120,9 +159,10 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
 
+    # Saving
     plt.savefig(
-        path
-        + "radar_processing/figs/sipam_cappi/sipam_"
+        save_path
+        + "sipam_"
         + str_level
         + "_dBZ_"
         + date.strftime("%Y%m%d%H%M%S")
