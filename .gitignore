@@ -9,6 +9,7 @@ radar_processing/__pycache__/
 
 tracking/figs/
 tracking/__pycache__/
+tracking/tracks_obj.pkl
 
 .vscode/
 
