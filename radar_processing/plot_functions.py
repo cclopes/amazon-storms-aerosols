@@ -61,7 +61,7 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
             "linewidth": 0.75,
         },
     )
-    # Adding rivers
+    # Adding shapefile
     ax.add_geometries(
         Reader(path + shape_states).geometries(),
         ccrs.PlateCarree(),
@@ -70,7 +70,7 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
         edgecolor="gray",
         alpha=0.8,
     )
-    # Adding shapefile
+    # Adding gridlines
     gl = ax.gridlines(
         crs=ccrs.PlateCarree(),
         draw_labels=True,
