@@ -13,6 +13,10 @@ tracking/tracks_obj.pkl
 
 .vscode/
 
+renv/
+
 .Rproj.user
 .Rhistory
+.Rprofile
+renv.lock
 
