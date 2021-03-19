@@ -1,13 +1,14 @@
 """
-Plotting CAPPIs
+Quick CAPPI plotting
 
-@author: Camila Lopes (camila.lopes@iag.usp.br)
+@author: Camila Lopes (cclopes.me)
 """
 
 from glob import glob
 
 from plot_functions import plot_basic_cappi
 
+# Defining paths
 path = "/mnt/c/Users/ccl/OneDrive - usp.br/Documentos/GitHub/amazon-storms-aerosols/"
 path_cappis = "data/radar/sipam_manaus/arm_cappi/2014-03/20140303/"
 cappis = glob(path + path_cappis + "*")

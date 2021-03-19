@@ -1,7 +1,7 @@
 """
-MISCELLANEOUS FUNCTIONS
+Miscellaneous functions
 
-@author: Camila Lopes (camila.lopes@iag.usp.br)
+@author: Camila Lopes (cclopes.me)
 """
 
 import numpy as np

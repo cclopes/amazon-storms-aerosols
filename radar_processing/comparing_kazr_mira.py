@@ -1,3 +1,9 @@
+"""
+Comparing KAZR and MIRA radar data
+
+@author: Camila Lopes (cclopes.me)
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from glob import glob

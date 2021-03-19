@@ -1,7 +1,7 @@
 """
-CREATE CUSTOM COLORBARS
+Create custom colorbars
 
-@author: Camila Lopes (camila.lopes@iag.usp.br)
+@author: Camila Lopes (cclopes.me)
 """
 
 import matplotlib.pyplot as plt
@@ -9,8 +9,10 @@ from matplotlib.colors import ColorConverter
 
 from misc_functions import make_colormap
 
+
 converter = ColorConverter().to_rgb
 
+# DBZ
 cmap = make_colormap(
     [
         converter("#99CCFF"),
@@ -32,6 +34,7 @@ cmap = make_colormap(
 )
 plt.register_cmap(name=cmap.name, cmap=cmap)
 
+# ZDR
 cmap = make_colormap(
     [
         converter("#20314C"),
@@ -53,6 +56,7 @@ cmap = make_colormap(
 )
 plt.register_cmap(name=cmap.name, cmap=cmap)
 
+# KDP
 cmap = make_colormap(
     [
         converter("#224C25"),
@@ -74,6 +78,7 @@ cmap = make_colormap(
 )
 plt.register_cmap(name=cmap.name, cmap=cmap)
 
+# RHO
 cmap = make_colormap(
     [
         converter("#FFF0E2"),
@@ -92,6 +97,7 @@ cmap = make_colormap(
 )
 plt.register_cmap(name=cmap.name, cmap=cmap)
 
+# Ice/Water Mass
 cmap = make_colormap(
     [
         converter("#FFFFFF"),
