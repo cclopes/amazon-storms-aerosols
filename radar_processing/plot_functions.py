@@ -1,7 +1,7 @@
 """
 Plotting functions for radar data
 
-@author: Camila Lopes (camila.lopes@iag.usp.br)
+@author: Camila Lopes (cclopes.me)
 """
 
 import os
@@ -20,7 +20,15 @@ from read_sipam_cappis import read_sipam_cappi
 
 def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
     """
+    Plot "corrected_reflectivity" field in a level.
 
+    Parameters
+    ----------
+    path: full path of repository
+    filename: path + name of GAMIC-compatible radar file
+    level: level of PPI to plot
+    shape_rivers: shapefile path of rivers
+    shape_states: shapefile path of BR states
     """
 
     # Reading file and generating str for date and level
@@ -103,8 +111,17 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
 
 def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
     """
+    Plot "DBZc" field in a level.
 
+    Parameters
+    ----------
+    path: full path of repository
+    filename: path + name of SIPAM CAPPI radar file
+    level: level of CAPPI to plot
+    shape_rivers: shapefile path of rivers
+    shape_states: shapefile path of BR states
     """
+
     # Reading file and generating str for date and level
     radar = read_sipam_cappi(filename)
     date = pyart.util.datetime_from_grid(radar)
@@ -179,7 +196,12 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
 
 def plot_scan_strategy(path, filename):
     """
-    
+    Plor radar scan strategy.
+
+    Parameters
+    ----------
+    path: full path of repository
+    filename: path + name of GAMIC-compatible radar file
     """
 
     radar = pyart.aux_io.read_gamic(filename)

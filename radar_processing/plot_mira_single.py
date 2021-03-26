@@ -13,7 +13,18 @@ from read_mira_radar import read_mira
 
 def unzip_files(file, path):
     """
+    Unzip a file.
+
+    Parameters
+    ----------
+    file: name of zip file
+    path: full path of folder with zip files
+
+    Returns
+    -------
+    paths: list of unzipped files
     """
+
     bt = time.time()
 
     with ZipFile(file, "r") as zip_ref:
@@ -31,6 +42,14 @@ def unzip_files(file, path):
 
 def read_plot_mira(filenames, save_path="radar_processing/figs/mira/"):
     """
+    Read and plot several fields of MIRA files.
+    Fields plotted: "SNRg", "SNR", "Zg", "Ze", "VELg", "VEL", "LDRg", "LDR", 
+        "RHO", "RHOwav", "DPS", "DPSwav", "RMSg", "RMS"
+
+    Parameters
+    ----------
+    filenames: name of MIRA files
+    save_path: path to save figures
     """
 
     # Reading files
@@ -214,6 +233,18 @@ def plot_mira_field(
     field, times, melting_height, display, vmin, vmax, cmap, figname
 ):
     """
+    Plot a certain MIRA field.
+
+    Parameters
+    ----------
+    field: name of field to be plotted
+    times: list of timestamps for melting layer height plot
+    melting_height: list of melting layer height data
+    display: pyart.graph.RadarDisplay of MIRA radar data
+    vmin: field min value
+    vmax: field max value
+    cmap: name of colormap to be used
+    figname: path + figure name
     """
 
     plt.ioff()
@@ -242,11 +273,17 @@ def plot_mira_field(
     gc.collect()
 
 
-data_path = "/mnt/c/Users/ccl/OneDrive - usp.br/Documentos/GitHub/amazon-storms-aerosols/data/radar/mira_campina/"
+# Defining filepath
+data_path = (
+    "/mnt/c/Users/ccl/OneDrive - usp.br/Documentos/"
+    + "GitHub/amazon-storms-aerosols/data/radar/mira_campina/"
+)
 
+# Unzipping files
 # files = unzip_files(data_path + "2020/10/31.zip", data_path)
 # files = files[0]
 
+# Plotting files
 files = glob(data_path + "temp/*.mmclx")
 for file in files:
     bt = time.time()
