@@ -1,3 +1,9 @@
+"""
+Plotting MIRA quicklooks
+
+@author: Camila Lopes (camila.lopes@iag.usp.br)
+"""
+
 import os
 import gc
 import matplotlib.pyplot as plt
@@ -8,6 +14,15 @@ from read_mira_radar import read_multi_mira
 
 def read_plot_mira_quicklooks(filenames, save_path="figs/", res=5):
     """
+    Read and plot several fields of MIRA files for 24h quicklooks.
+    Fields plotted: "SNRg", "SNR", "Zg", "Ze", "VELg", "VEL", "LDRg", "LDR",
+        "RHO", "RHOwav", "DPS", "DPSwav", "RMSg", "RMS"
+
+    Parameters
+    ----------
+    filenames: name of MIRA files
+    save_path: path to save figures
+    res: resolution (in minutes) of reprocessed data
     """
 
     # Reading files
@@ -25,15 +40,15 @@ def read_plot_mira_quicklooks(filenames, save_path="figs/", res=5):
     # times = times.astype("datetime64[ns]")
     times = []
 
-    # Criando diretório para salvar as figuras
+    # Creating directory to save the figures
     try:
         os.makedirs(save_path + date.strftime("%Y/%m/%d/"))
     except FileExistsError:
         pass
     save_path = save_path + date.strftime("%Y/%m/%d/")
 
-    # Plotando
-    print("Plotting/saving MIRA variables")
+    # Plotting
+    print("Plotting/saving MIRA fields")
 
     display = pyart.graph.RadarDisplay(mira)
 
@@ -199,12 +214,26 @@ def plot_mira_field(
     field, times, melting_height, display, vmin, vmax, cmap, figname
 ):
     """
+    Plot a certain MIRA field.
+
+    Parameters
+    ----------
+    field: name of field to be plotted
+    times: list of timestamps for melting layer height plot
+    melting_height: list of melting layer height data
+    display: pyart.graph.RadarDisplay of MIRA radar data
+    vmin: field min value
+    vmax: field max value
+    cmap: name of colormap to be used
+    figname: path + figure name
     """
 
     plt.ioff()
 
+    # Opening fig()
     fig = plt.figure(figsize=(15, 5))  # (10, 5)
 
+    # Plotting
     display.plot_vpt(
         field,
         vmin=vmin,
@@ -214,14 +243,17 @@ def plot_mira_field(
         mask_outside=True,
         raster=True,
     )
+    plt.ylim((0, 18))
+    # Adding melting layer height
     # plt.plot(times, melting_height, "k-", label="Melting Layer Height")
     display.plot_grid_lines()
+    # Adding legend of melting layer height
     # plt.legend(loc="upper right")
-    plt.ylim((0, 18))
 
+    # Saving figure
     plt.savefig(figname + ".png", dpi=300, bbox_inches="tight")
 
     plt.clf()
     plt.close()
-    del fig
     gc.collect()
+    del fig

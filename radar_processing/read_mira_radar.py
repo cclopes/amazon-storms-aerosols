@@ -1,6 +1,11 @@
-# Adapted from "Reading ARM VPT data"
-# http://arm-doe.github.io/pyart/_modules/pyart/aux_io/arm_vpt.html
+"""
+Reading MIRA radar data
 
+Adapted from "Reading ARM VPT data"
+- http://arm-doe.github.io/pyart/_modules/pyart/aux_io/arm_vpt.html
+
+@author: Camila Lopes (camila.lopes@iag.usp.br)
+"""
 
 import netCDF4
 import numpy as np
@@ -58,6 +63,8 @@ def read_mira(
     -------
     radar : Radar
         Radar object.
+    melt_hei : list of dicts
+        Melting Layer Height data.
     """
 
     # create metadata retrieval object
@@ -347,6 +354,7 @@ def read_multi_mira(filenames, for_quicklooks=False, ql_res=5):
     Returns
     -------
     radar : Py-ART radar object
+    melt_hei : List of dicts of melting layer height
     """
 
     radar, melt_hei = read_mira(filenames[0], for_quicklooks, ql_res)

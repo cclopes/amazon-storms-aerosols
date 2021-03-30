@@ -1,7 +1,7 @@
 """
 Plotting functions for radar data
 
-@author: Camila Lopes (cclopes.me)
+@author: Camila Lopes (camila.lopes@iag.usp.br)
 """
 
 import os
@@ -92,6 +92,7 @@ def plot_basic_ppi(path, filename, level, shape_rivers, shape_states):
         [50, 100, 150, 200, 250], ax=ax, col="lightgray", lw=1
     )
 
+    # Saving figure
     plt.savefig(
         save_path
         + "sipam_"
@@ -176,7 +177,7 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
 
-    # Saving
+    # Saving figure
     plt.savefig(
         save_path
         + "sipam_"
@@ -196,7 +197,7 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
 
 def plot_scan_strategy(path, filename):
     """
-    Plor radar scan strategy.
+    Plot radar scan strategy.
 
     Parameters
     ----------
@@ -204,6 +205,7 @@ def plot_scan_strategy(path, filename):
     filename: path + name of GAMIC-compatible radar file
     """
 
+    # Reading file, defining vars
     radar = pyart.aux_io.read_gamic(filename)
     ranges = radar.range["data"]
     elevs = radar.fixed_angle["data"]
@@ -214,11 +216,13 @@ def plot_scan_strategy(path, filename):
     )
     beamwidth = float(radar.instrument_parameters["radar_beam_width_h"]["data"])
 
+    # Plotting
     ax = wrl.vis.plot_scan_strategy(
         ranges, elevs, site, beamwidth, vert_res=1000, maxalt=20000, units="km"
     )
     ax.set_title("SIPAM S-Band")
 
+    # Saving figure
     plt.savefig(
         path + "radar_processing/figs/sipam_scan_strategy.png",
         bbox_inches="tight",

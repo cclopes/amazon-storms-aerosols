@@ -1,13 +1,13 @@
 """
 Reading SIPAM CAPPI (level 2) objects.
 
-Data source: https://adc.arm.gov/discovery/#/results/id::3900_macro_sipam-s-band-cappi_cloud_radardoppler?showDetails=true
+Data source:
+https://adc.arm.gov/discovery/#/results/id::3900_macro_sipam-s-band-cappi_cloud_radardoppler?showDetails=true
 
 Adapted from pyart.io.read_grid source code
 (https://arm-doe.github.io/pyart/_modules/pyart/io/grid_io.html)
 
 @author: Camila Lopes (camila.lopes@iag.usp.br)
-
 """
 
 import datetime
@@ -102,12 +102,16 @@ def read_sipam_cappi(
     # required reserved variables
     time = _ncvar_to_dict(dset.variables["time"])
     origin_latitude = {
-        "data": [dset.variables["grid_mapping_0"].latitude_of_projection_origin],
+        "data": [
+            dset.variables["grid_mapping_0"].latitude_of_projection_origin
+        ],
         "long_name": "Latitude of projection origin",
         "units": "degree_N",
     }
     origin_longitude = {
-        "data": [dset.variables["grid_mapping_0"].longitude_of_projection_origin],
+        "data": [
+            dset.variables["grid_mapping_0"].longitude_of_projection_origin
+        ],
         "long_name": "Longitude of projection origin",
         "units": "degree_E",
     }
@@ -155,7 +159,8 @@ def read_sipam_cappi(
         else:
             bad_shape = field_dic["data"].shape
             warnings.warn(
-                "Field %s skipped due to incorrect shape %s" % (field, bad_shape)
+                "Field %s skipped due to incorrect shape %s"
+                % (field, bad_shape)
             )
 
     # radar_ variables

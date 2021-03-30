@@ -1,7 +1,7 @@
 """
 Comparing KAZR and MIRA radar data
 
-@author: Camila Lopes (cclopes.me)
+@author: Camila Lopes (camila.lopes@iag.usp.br)
 """
 
 import matplotlib.pyplot as plt
