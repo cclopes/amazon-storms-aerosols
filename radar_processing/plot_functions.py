@@ -5,6 +5,7 @@ Plotting functions for radar data
 """
 
 import os
+import gc
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -156,7 +157,7 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
         linewidth=0.75,
         facecolor="None",
         edgecolor="darkblue",
-        alpha=0.3,
+        alpha=0.5,
     )
     # Adding shapefile
     ax.add_geometries(
@@ -172,6 +173,7 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
         draw_labels=True,
         xlocs=np.arange(-70, -50, 1),
         ylocs=np.arange(-10, 1, 1),
+        alpha=0.5,
     )
     gl.top_labels = gl.right_labels = False
     gl.xformatter = LONGITUDE_FORMATTER
@@ -191,6 +193,9 @@ def plot_basic_cappi(path, filename, level, shape_rivers, shape_states):
         edgecolor="white",
     )
     plt.close()
+
+    del radar, fig, ax, display, gl
+    gc.collect()
 
     print("Plotted! " + str(date) + " - " + str_level + " km")
 
