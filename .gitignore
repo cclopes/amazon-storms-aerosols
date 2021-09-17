@@ -23,3 +23,4 @@ renv.lock
 radar_processing/mira_quicklooks/__pycache__/read_mira_radar.cpython-38.pyc
 data/general
 data/soundings
+.RData
