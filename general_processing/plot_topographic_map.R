@@ -7,7 +7,7 @@ library(tidyverse)
 # library(rgdal)
 library(tabularaster)
 library(sf)
-# library(cptcity)
+library(cptcity)
 library(colorspace)
 library(ggspatial)
 library(ggnewscale)
@@ -64,8 +64,8 @@ elevs <- get_elev_raster(coords, prj = prj_dd, z = 6)
 # Converting to tibble
 elevs_df <- tabularaster::as_tibble(elevs, cell = F, xy = T) %>%
   drop_na %>%
-  filter(x >= -63 & x <= -57, y >= -6 & y <= 0) %>%
-  mutate(cellvalue = ifelse(cellvalue < 0, NA, cellvalue))
+  filter(x >= -63 & x <= -57, y >= -6 & y <= 0)
+# mutate(cellvalue = ifelse(cellvalue <= 25, NA, cellvalue))
 rm(elevs)
 
 # Radar, stations position
@@ -82,6 +82,14 @@ goam_has_labels <-
   )
 sipam <- tibble("lon" = -59.992, "lat" = -3.1493)
 sipam_ring <- dfCircle(sipam$lon, sipam$lat, 150)
+xpol <- goam_sites %>% 
+  filter(goamazon_reference == "T3") %>% 
+  select(longitude, latitude) %>% 
+  rename(lon = longitude, lat = latitude) %>% 
+  unique()
+xpol_ring <- dfCircle(xpol$lon, xpol$lat, 60) %>% 
+  mutate(has = "has_cloud")
+xpol$has <- "has_cloud"
 
 # Shapefiles
 cities <- st_read("data/general/shapefiles/AM_Municipios_2019.shp",
@@ -102,22 +110,31 @@ ggplot() +
     data = cities,
     fill = NA,
     size = 0.25,
-    color = "gray"
+    color = "gray60"
   ) +
   geom_sf(
     data = rivers,
     fill = NA,
-    size = 0.4,
-    color = "lightblue"
+    size = 0.25,
+    color = "steelblue"
   ) +
   geom_path(data = sipam_ring,
             aes(lon, lat),
-            size = 1,
+            size = 0.8,
             color = "darkred") +
   geom_point(
     data = sipam,
-    aes(lon, lat),
-    color = "darkred",
+    aes(lon, lat, color = "SIPAM"),
+    shape = 17,
+    size = 4
+  ) +
+  geom_path(data = xpol_ring,
+            aes(lon, lat),
+            size = 0.8,
+            color = "purple4") + 
+  geom_point(
+    data = xpol,
+    aes(lon, lat, color = "XPOL"),
     shape = 17,
     size = 4
   ) +
@@ -140,14 +157,23 @@ ggplot() +
     ylim = c(-4.505793, -1.792021),
     expand = F
   ) +
-  scale_fill_continuous_sequential(
+  scale_color_manual(name = NULL, values = c("SIPAM" = "darkred", "XPOL" = "purple4")) + 
+  scale_fill_stepsn(
     name = "Elevation (m)",
-    limits = c(0, 500),
-    palette = "terrain2",
-    rev = F,
-    na.value = "mediumaquamarine"
+    limits = c(-25, 200),
+    colours = c(
+      "#1B63C9",
+      "#00B9A1",
+      "#6DE27C",
+      "#FEFE98",
+      "#B6A272",
+      "#93756E",
+      "#DBD1CF",
+      "#FFFFFF"
+    ),
+    breaks = seq(-25, 200, 25)
   ) +
-  guides(fill = guide_colorbar(barwidth = 10)) +
+  guides(fill = guide_colorbar(barwidth = 16)) +
   theme(
     legend.position = "bottom",
     axis.title = element_blank(),
