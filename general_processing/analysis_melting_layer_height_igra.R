@@ -1,9 +1,17 @@
+# ------------------------------------------------------------------------------
+# Defining melting layer height in Campina from IGRA dataset
+# ------------------------------------------------------------------------------
+
+# Loading necessary packages ---------------------------------------------------
 library(tidyverse)
 library(lubridate)
 
-# Station info
+# Loading data -----------------------------------------------------------------
+
+# Station info - print
 # BRM00082332  -3.1500  -59.9833   84.0    MANAUS (AERO)        1967 2021  22432
 
+# First try
 # igra2_derived <- read_table2("data/soundings/IGRA2/BRM00082332-drvd.txt", 
 #                              col_names = c("PRESS", "REPGPH", "CALCGPH", "TEMP", 
 #                                            "TEMPGRAD", "PTEMP", "PTEMPGRAD", 
@@ -13,6 +21,7 @@ library(lubridate)
 #                                            "N"), 
 #                              comment = "#")
 
+# Second try
 igra2_header <- read_csv("data/soundings/IGRA2/BRM00082332-drvd.txt", 
                          col_names = "header") %>%
   # mutate(row_id = row_number()) %>% 
@@ -28,7 +37,7 @@ igra2_header <- read_csv("data/soundings/IGRA2/BRM00082332-drvd.txt",
                     "SI", "KI", "TTI", "CAPE", "CIN"),
            convert = T)
 
-# Extracting freezing height
+# Extracting freezing height ---------------------------------------------------
 frz_hgt <- igra2_header %>% 
   mutate(HOUR = na_if(HOUR, 99),
          date = ymd_hms(paste(YEAR, MONTH, DAY, HOUR, "00", "00")),
@@ -38,11 +47,11 @@ frz_hgt <- igra2_header %>%
          clm = ifelse(YEAR <= 1990, "1961-1990", 
                       ifelse(YEAR == 2021, NA, "1991-2020")))
 
-# PLOTS
+# Plots ------------------------------------------------------------------------
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 
-# Data availability
+# Data availability ------------------------------------------------------------
 ggplot(frz_hgt) +
   geom_histogram(aes(x = date), bins = 648) +
   geom_hline(yintercept = c(30, 60), color = "red") +
@@ -53,7 +62,7 @@ ggplot(frz_hgt) +
 ggsave("general_processing/figs/igra2_data_availability.png",
        dpi = 300, width = 7, height = 3)
 
-# Levels per sounding
+# Levels per sounding ----------------------------------------------------------
 ggplot(frz_hgt) +
   geom_point(aes(x = date, y = NUMLEV), size = 0.1) +
   scale_x_datetime(date_labels = "%Y", date_breaks = "5 year",
@@ -63,7 +72,7 @@ ggplot(frz_hgt) +
 ggsave("general_processing/figs/igra2_levels_availability.png",
        dpi = 300, width = 7, height = 3)
 
-# Boxplot of full dataset per month
+# Boxplot of full dataset per month --------------------------------------------
 ggplot(frz_hgt %>% group_by(MONTH)) +
   geom_boxplot(aes(x = month(date, label = T), y = FRZHGT)) +
   stat_summary(aes(x = month(date), y = FRZHGT), 
@@ -74,10 +83,11 @@ ggplot(frz_hgt %>% group_by(MONTH)) +
 ggsave("general_processing/figs/igra2_full_dataset.png", 
        dpi = 300, width = 6, height = 4)
 
-# Boxplot of climatologies per month
+# Boxplot of climatologies per month -------------------------------------------
 ggplot(frz_hgt %>% group_by(MONTH) %>% filter(!is.na(clm))) +
   geom_boxplot(aes(x = month(date, label = T), y = FRZHGT, color = clm)) +
-  stat_summary(aes(x = month(date), y = FRZHGT, color = clm), fun = mean, geom = "path") +
+  stat_summary(aes(x = month(date), y = FRZHGT, color = clm), 
+               fun = mean, geom = "path") +
   scale_y_continuous(limits = c(NA, 6000)) +
   labs(title = "Climatologies by Month - Manaus (AERO)", 
        x = "Month", y = "Freezing Level Height (m)", color = "Climatology") +
@@ -85,7 +95,7 @@ ggplot(frz_hgt %>% group_by(MONTH) %>% filter(!is.na(clm))) +
 ggsave("general_processing/figs/igra2_climatologies.png", 
        dpi = 300, width = 6, height = 4.5)
 
-# Boxplot of full dataset by month/hour
+# Boxplot of full dataset by month/hour ----------------------------------------
 ggplot(frz_hgt %>% filter(HOUR %in% c(0, 11, 12)) %>% group_by(MONTH)) +
   geom_boxplot(aes(x = month(date, label = T), y = FRZHGT, color = HOUR)) +
   stat_summary(aes(x = month(date), y = FRZHGT, color = HOUR),
@@ -99,7 +109,7 @@ ggplot(frz_hgt %>% filter(HOUR %in% c(0, 11, 12)) %>% group_by(MONTH)) +
 ggsave("general_processing/figs/igra2_full_dataset_byhour.png", 
        dpi = 300, width = 6, height = 4.5)
 
-# Calculating means
+# Calculating means ------------------------------------------------------------
 frz_means <- frz_hgt %>% 
   filter(HOUR %in% c("0", "11", "12")) %>% 
   mutate(HOUR = ifelse(HOUR == "11", "12", HOUR)) %>% 
@@ -115,7 +125,7 @@ frz_means <- frz_hgt %>%
   ungroup()
 summary(frz_means)
 
-# Plotting
+# Plotting means ---------------------------------------------------------------
 ggplot(frz_means) +
   geom_density(aes(x = (mean_total - FRZHGT))) +
   geom_density(aes(x = (mean_month - FRZHGT)), color = "red") +
@@ -130,15 +140,23 @@ ggplot(frz_means) +
 ggsave("general_processing/figs/igra2_density_error.png", dpi = 300,
        width = 6, height = 5)
 
-# ggplot(frz_means %>% group_by(MONTH) %>% mutate(ymin = min(FRZHGT, na.rm = T), ymax = max(FRZHGT, na.rm = T))) +
+# ggplot(
+#   frz_means %>% 
+#     group_by(MONTH) %>% 
+#     mutate(ymin = min(FRZHGT, na.rm = T), ymax = max(FRZHGT, na.rm = T))
+#   ) +
 #   geom_line(aes(x = month(date), y = mean_total)) +
 #   geom_errorbar(aes(x = month(date), y = mean_total, ymin = ymin, ymax = ymax))
 # 
-# ggplot(frz_means %>% group_by(MONTH) %>% mutate(ymin = min(FRZHGT, na.rm = T), ymax = max(FRZHGT, na.rm = T))) +
+# ggplot(
+#   frz_means %>% 
+#     group_by(MONTH) %>% 
+#     mutate(ymin = min(FRZHGT, na.rm = T), ymax = max(FRZHGT, na.rm = T))
+#   ) +
 #   geom_line(aes(x = month(date), y = mean_month)) +
 #   geom_errorbar(aes(x = month(date), y = mean_month, ymin = ymin, ymax = ymax))
 
-# Generating freezing height profile
+# Generating freezing height profile -------------------------------------------
 frz_hour <- frz_means %>% 
   group_by(HOUR) %>% 
   select(mean_hour) %>% 
@@ -152,7 +170,7 @@ frz_hour <- tibble(
   )
 )
 
-# Plotting, saving file
+# Plotting freezing height profile, saving file --------------------------------
 ggplot(frz_hour, aes(hour, frz_height)) +
   geom_point() +
   geom_path() +
