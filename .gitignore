@@ -20,8 +20,7 @@ renv/
 .Rprofile
 renv.lock
 
-radar_processing/mira_quicklooks/__pycache__/read_mira_radar.cpython-38.pyc
+radar_processing/mira_quicklooks/__pycache__/
 data/general
 data/soundings
 .RData
-radar_processing/mira_quicklooks/generate_mira_24h_quicklooks.py
