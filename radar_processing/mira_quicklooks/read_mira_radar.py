@@ -9,6 +9,7 @@ Adapted from "Reading ARM VPT data"
 
 import netCDF4
 import numpy as np
+from numpy.core.numeric import NaN
 from skimage.measure import block_reduce
 
 from pyart.io import cfradial
@@ -89,7 +90,9 @@ def read_mira(
     # If averaging, increase temporal resolution with res
     if for_quicklooks:
         orig_res = round(
-            float(ncobj.hrd[ncobj.hrd.find("AVE") + 4 : ncobj.hrd.find("\nC")])
+            float(
+                ncobj.hrd[ncobj.hrd.find("\nAVE") + 5 : ncobj.hrd.find("\nC")]
+            )
         )
         res = round(ql_res * 60 / orig_res)
 
@@ -178,7 +181,7 @@ def read_mira(
     sweep_number["data"] = np.array([0], dtype=np.int32)
 
     sweep_mode = filemetadata("sweep_mode")
-    sweep_mode["data"] = np.array(["vertical_pointing"], dtype=np.str)
+    sweep_mode["data"] = np.array(["vertical_pointing"], dtype=str)
 
     fixed_angle = filemetadata("fixed_angle")
     fixed_angle["data"] = np.array([90.0], dtype=np.float32)
@@ -220,18 +223,36 @@ def read_mira(
                 continue
             field_name = key
         fields[field_name] = cfradial._ncvar_to_dict(ncvars[key])
-        if for_quicklooks:
-            fields[field_name]["data"] = block_reduce(
-                fields[field_name]["data"],
-                block_size=(res, 1),
-                func=np.nanmean,
-                cval=1e20,
-            )
         if field_name in ("SNRg", "SNR", "Ze", "Zg", "Z", "LDRg", "LDR"):
             fields[field_name]["data"] = 10 * np.log10(
                 fields[field_name]["data"]
             )
             fields[field_name]["units"] = "dBZ"
+        if for_quicklooks:
+            if field_name in ("VELg", "VEL"):
+                fieldmin = block_reduce(
+                    fields[field_name]["data"].astype(float),
+                    block_size=(res, 1),
+                    func=np.nanmin,
+                    cval="nan",
+                )
+                fieldmax = block_reduce(
+                    fields[field_name]["data"].astype(float),
+                    block_size=(res, 1),
+                    func=np.nanmax,
+                    cval="nan",
+                )
+                # print(fieldmin)
+                fields[field_name]["data"] = np.where(
+                    np.abs(fieldmin) < np.abs(fieldmax), fieldmax, fieldmin
+                )
+            else:
+                fields[field_name]["data"] = block_reduce(
+                    fields[field_name]["data"].astype(float),
+                    block_size=(res, 1),
+                    func=np.nanmax,
+                    cval="nan",
+                )
 
     # 4.5 instrument_parameters sub-convention -> instrument_parameters dict
     # this section needed multiple changes and/or additions since the
@@ -242,7 +263,7 @@ def read_mira(
     frequency["data"] = np.array([omega / 1e9], dtype=np.float32)
 
     prt_mode = filemetadata("prt_mode")
-    prt_mode["data"] = np.array(["fixed"], dtype=np.str)
+    prt_mode["data"] = np.array(["fixed"], dtype=str)
 
     prf = float(ncvars["prf"][:])
     prt = filemetadata("prt")
@@ -273,7 +294,7 @@ def read_mira(
     # 4.7 lidar_parameters sub-convention -> skip
     # 4.8 radar_calibration sub-convention -> skip
 
-    # 4.9 Getting Melting Layer Height data to a new file
+    # 4.9 Getting Melting Layer Height and Noise Power data to a new file
     melthei = {
         "var": "MeltHei",
         "long_name": ncvars["MeltHei"].long_name,
@@ -292,24 +313,37 @@ def read_mira(
         "units": ncvars["MeltHeiDB"].units,
         "yrange": ncvars["MeltHeiDB"].yrange,
     }
+    mrm = {
+        "var": "MRM",
+        "long_name": "Radiometer Signal (mean of co and cx channels by a offset of 0.0942738",
+        "units": ncvars["MRMco"].units,
+        "yrange": ncvars["MRMco"].yrange,
+        "data": (ncvars["MRMcx"][:] + ncvars["MRMco"][:]) / 2 - 0.0942738,
+    }
     if for_quicklooks:
         melthei["data"] = block_reduce(
             ncvars["MeltHei"][:],
             block_size=(res,),
-            func=np.nanmean,
-            cval=np.nanmean(ncvars["MeltHei"][:]),
+            func=np.nanmax,
+            cval=np.nanmax(ncvars["MeltHei"][:]),
         )
         melthei_det["data"] = block_reduce(
             ncvars["MeltHeiDet"][:],
             block_size=(res,),
-            func=np.nanmean,
-            cval=np.nanmean(ncvars["MeltHeiDet"][:]),
+            func=np.nanmax,
+            cval=np.nanmax(ncvars["MeltHeiDet"][:]),
         )
         melthei_db["data"] = block_reduce(
             ncvars["MeltHeiDB"][:],
             block_size=(res,),
-            func=np.nanmean,
-            cval=np.nanmean(ncvars["MeltHeiDB"][:]),
+            func=np.nanmax,
+            cval=np.nanmax(ncvars["MeltHeiDB"][:]),
+        )
+        mrm["data"] = block_reduce(
+            mrm["data"],
+            block_size=(res,),
+            func=np.nanmax,
+            cval=np.nanmax(mrm["data"]),
         )
     else:
         melthei["data"] = ncvars["MeltHei"][:]
@@ -339,6 +373,7 @@ def read_mira(
             instrument_parameters=instrument_parameters,
         ),
         (melthei, melthei_det, melthei_db),
+        (mrm),
     )
 
 
@@ -357,12 +392,16 @@ def read_multi_mira(filenames, for_quicklooks=False, ql_res=5):
     melt_hei : List of dicts of melting layer height
     """
 
-    radar, melt_hei = read_mira(filenames[0], for_quicklooks, ql_res)
+    radar, melt_hei, mrm = read_mira(filenames[0], for_quicklooks, ql_res)
     for i in range(1, len(filenames)):
-        radar_i, melt_hei_i = read_mira(filenames[i], for_quicklooks, ql_res)
+        radar_i, melt_hei_i, mrm_i = read_mira(
+            filenames[i], for_quicklooks, ql_res
+        )
         radar = join_radar(radar, radar_i)
         for j in range(3):
             melt_hei[j]["data"] = np.ma.append(
                 melt_hei[j]["data"], melt_hei_i[j]["data"]
             )
-    return radar, melt_hei
+        mrm["data"] = np.ma.append(mrm["data"], mrm_i["data"])
+
+    return radar, melt_hei, mrm

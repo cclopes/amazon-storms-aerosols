@@ -12,40 +12,41 @@ import pyart
 from read_mira_radar import read_multi_mira
 
 
-def read_plot_mira_quicklooks(filenames, save_path="figs/", res=5):
+def read_plot_mira_quicklooks(
+    filenames, save_path="figs/", res=5, is_weekly_fig=False
+):
     """
     Read and plot several fields of MIRA files for 24h quicklooks.
-    Fields plotted: "SNRg", "SNR", "Zg", "Ze", "VELg", "VEL", "LDRg", "LDR",
-        "RHO", "RHOwav", "DPS", "DPSwav", "RMSg", "RMS"
+    Fields plotted: "SNRg", "Ze", "VEL", "LDRg"
 
     Parameters
     ----------
     filenames: name of MIRA files
     save_path: path to save figures
     res: resolution (in minutes) of reprocessed data
+    is_weekly_figs: flag for weekly figure
     """
 
     # Reading files
     print("Reading MIRA files")
-    mira, mira_melthei = read_multi_mira(
+    mira, mira_melthei, mira_mrm = read_multi_mira(
         filenames, for_quicklooks=True, ql_res=res
     )
 
+    # Generating x axes for noise power plot
+    times = pyart.util.datetimes_from_radar(mira)
     # Grabbing date from MIRA file
-    date = pyart.util.datetimes_from_radar(mira)[0]
-
-    # Generating x axes for Melting Layer Height data
-    # print(mira_melthei[0]['data'])
-    # times = pyart.util.datetimes_from_radar(mira)
-    # times = times.astype("datetime64[ns]")
-    times = []
-
-    # Creating directory to save the figures
-    try:
-        os.makedirs(save_path + date.strftime("%Y/%m/%d/"))
-    except FileExistsError:
-        pass
-    save_path = save_path + date.strftime("%Y/%m/%d/")
+    date = times[0]
+    # Generating date for title and fig name
+    if is_weekly_fig:
+        date_str = (
+            times[len(times) % 2]._to_real_datetime().date().isocalendar()
+        )
+        date_str = str(date_str[0]) + " week " + str(date_str[1])
+        date_figname = date_str.replace(" ", "_")
+    else:
+        date_str = str(date)[:10]
+        date_figname = date_str.replace("-", "_")
 
     # Plotting
     print("Plotting/saving MIRA fields")
@@ -54,164 +55,80 @@ def read_plot_mira_quicklooks(filenames, save_path="figs/", res=5):
 
     plot_mira_field(
         field="SNRg",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
         display=display,
         vmin=mira.fields["SNRg"]["yrange"][0],
         vmax=mira.fields["SNRg"]["yrange"][1],
         cmap="pyart_Carbone17",
-        figname=save_path + "mira_snrg_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="SNR",
+        title="Health status - " + date_str,
         times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["SNR"]["yrange"][0],
-        vmax=mira.fields["SNR"]["yrange"][1],
-        cmap="pyart_Carbone17",
-        figname=save_path + "mira_snr_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="Zg",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["Zg"]["yrange"][0],
-        vmax=40,
-        cmap="pyart_Theodore16",
-        figname=save_path + "mira_zg_" + date.strftime("%Y%m%d%H%M%S"),
+        mrm=mira_mrm["data"] * 1e1,
+        figname=save_path + "Health/Mira35_Health_Campina_" + date_figname,
+        is_weekly_fig=is_weekly_fig,
+        health_fig=True,
     )
 
     plot_mira_field(
         field="Ze",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
         display=display,
         vmin=mira.fields["Ze"]["yrange"][0],
-        vmax=40,
-        cmap="pyart_Theodore16",
-        figname=save_path + "mira_ze_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="VELg",
+        vmax=mira.fields["Ze"]["yrange"][1],
+        cmap="pyart_Carbone17",
+        title="Reflectivity (filtered) - " + date_str,
         times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["VELg"]["yrange"][0],
-        vmax=mira.fields["VELg"]["yrange"][1],
-        cmap="pyart_BuDRd18",
-        figname=save_path + "mira_velg_" + date.strftime("%Y%m%d%H%M%S"),
+        mrm=mira_mrm["data"] * 1e1,
+        figname=save_path
+        + "Reflectivity/Mira35_Reflectivity_Campina_"
+        + date_figname,
+        is_weekly_fig=is_weekly_fig,
+        health_fig=False,
     )
 
     plot_mira_field(
         field="VEL",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
         display=display,
         vmin=mira.fields["VEL"]["yrange"][0],
         vmax=mira.fields["VEL"]["yrange"][1],
         cmap="pyart_BuDRd18",
-        figname=save_path + "mira_vel_" + date.strftime("%Y%m%d%H%M%S"),
+        title="Doppler Velocity (filtered) - " + date_str,
+        times=times,
+        mrm=mira_mrm["data"] * 1e1,
+        figname=save_path
+        + "Vel_Doppler/Mira35_Vel_Doppler_Campina_"
+        + date_figname,
+        is_weekly_fig=is_weekly_fig,
+        health_fig=False,
     )
 
     plot_mira_field(
         field="LDRg",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
         display=display,
         vmin=mira.fields["LDRg"]["yrange"][0],
         vmax=mira.fields["LDRg"]["yrange"][1],
         cmap="pyart_SCook18",
-        figname=save_path + "mira_ldrg_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="LDR",
+        title="Linear De-Polarization Ratio (unfiltered) - " + date_str,
         times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["LDR"]["yrange"][0],
-        vmax=mira.fields["LDR"]["yrange"][1],
-        cmap="pyart_SCook18",
-        figname=save_path + "mira_ldr_" + date.strftime("%Y%m%d%H%M%S"),
+        mrm=mira_mrm["data"] * 1e1,
+        figname=save_path + "LDR/Mira35_LDR_Campina_" + date_figname,
+        is_weekly_fig=is_weekly_fig,
+        health_fig=False,
     )
 
-    plot_mira_field(
-        field="RHO",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["RHO"]["yrange"][0],
-        vmax=mira.fields["RHO"]["yrange"][1],
-        cmap="pyart_RefDiff",
-        figname=save_path + "mira_rho_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="RHOwav",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["RHOwav"]["yrange"][0],
-        vmax=mira.fields["RHOwav"]["yrange"][1],
-        cmap="pyart_RefDiff",
-        figname=save_path + "mira_rhowav_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="DPS",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["DPS"]["yrange"][0],
-        vmax=mira.fields["DPS"]["yrange"][1],
-        cmap="pyart_Wild25",
-        figname=save_path + "mira_dps_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="DPSwav",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["DPSwav"]["yrange"][0],
-        vmax=mira.fields["DPSwav"]["yrange"][1],
-        cmap="pyart_Wild25",
-        figname=save_path + "mira_dpswav_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="RMSg",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["RMSg"]["yrange"][0],
-        vmax=mira.fields["RMSg"]["yrange"][1],
-        cmap="pyart_NWS_SPW",
-        figname=save_path + "mira_rmsg_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    plot_mira_field(
-        field="RMS",
-        times=times,
-        melting_height=mira_melthei[0]["data"] / 1000,
-        display=display,
-        vmin=mira.fields["RMS"]["yrange"][0],
-        vmax=mira.fields["RMS"]["yrange"][1],
-        cmap="pyart_NWS_SPW",
-        figname=save_path + "mira_rms_" + date.strftime("%Y%m%d%H%M%S"),
-    )
-
-    del mira, mira_melthei, date, times, display
+    del mira, mira_melthei, mira_mrm, times, display
     gc.collect()
 
 
 def plot_mira_field(
-    field, times, melting_height, display, vmin, vmax, cmap, figname
+    field,
+    display,
+    vmin,
+    vmax,
+    cmap,
+    title,
+    times,
+    mrm,
+    figname,
+    is_weekly_fig=False,
+    health_fig=False,
 ):
     """
     Plot a certain MIRA field.
@@ -219,16 +136,28 @@ def plot_mira_field(
     Parameters
     ----------
     field: name of field to be plotted
-    times: list of timestamps for melting layer height plot
     melting_height: list of melting layer height data
     display: pyart.graph.RadarDisplay of MIRA radar data
     vmin: field min value
     vmax: field max value
     cmap: name of colormap to be used
+    title: title of the plot
+    times: list of timestamps for noise power plot
+    mrm: noise power data to plot
     figname: path + figure name
+    is_weekly_fig: flag for weekly figure
+    health_fig: flag for health figure plot
     """
 
     plt.ioff()
+
+    # Changing date label according to type of quicklook
+    if is_weekly_fig:
+        date_format = "%Y-%m-%d %H:%M"
+        date_label = "Date"
+    else:
+        date_format = "%H:%M"
+        date_label = "Time (HH:MM)"
 
     # Opening fig()
     fig = plt.figure(figsize=(15, 5))  # (10, 5)
@@ -239,16 +168,20 @@ def plot_mira_field(
         vmin=vmin,
         vmax=vmax,
         cmap=cmap,
+        title=title,
         time_axis_flag=True,
+        date_time_form=date_format,
+        axislabels=((date_label, None)),
         mask_outside=True,
         raster=True,
     )
+    # Adding noise power line if necessary
+    if health_fig:
+        plt.plot(times, 5 + mrm, "k-", label="Radiometric noise power")
+        plt.axhline(y=15, color="k", linestyle="dashed")
+        plt.legend(loc="upper right")
     plt.ylim((0, 18))
-    # Adding melting layer height
-    # plt.plot(times, melting_height, "k-", label="Melting Layer Height")
     display.plot_grid_lines()
-    # Adding legend of melting layer height
-    # plt.legend(loc="upper right")
 
     # Saving figure
     plt.savefig(figname + ".png", dpi=300, bbox_inches="tight")
