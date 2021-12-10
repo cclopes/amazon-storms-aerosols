@@ -6,6 +6,7 @@ Plotting MIRA quicklooks
 
 import os
 import gc
+from datetime import datetime
 import matplotlib.pyplot as plt
 import pyart
 
@@ -42,6 +43,10 @@ def read_plot_mira_quicklooks(
         date_str = (
             times[len(times) % 2]._to_real_datetime().date().isocalendar()
         )
+        if len(str(date_str[1])) == 1:
+            date_str = list(date_str)
+            date_str[1] = "0" + str(date_str[1])
+            date_str = tuple(date_str)
         date_str = str(date_str[0]) + " week " + str(date_str[1])
         date_figname = date_str.replace(" ", "_")
     else:
@@ -153,7 +158,7 @@ def plot_mira_field(
 
     # Changing date label according to type of quicklook
     if is_weekly_fig:
-        date_format = "%Y-%m-%d %H:%M"
+        date_format = "%Y-%m-%d\n%H:%M"
         date_label = "Date"
     else:
         date_format = "%H:%M"
@@ -180,6 +185,22 @@ def plot_mira_field(
         plt.plot(times, 5 + mrm, "k-", label="Radiometric noise power")
         plt.axhline(y=15, color="k", linestyle="dashed")
         plt.legend(loc="upper right")
+    if is_weekly_fig:
+        plt.xlim(
+            (
+                datetime.strptime(
+                    title[-12:] + " 1 00:00", "%G week %V %u %H:%M"
+                ),
+                datetime.strptime(
+                    title[-12:] + " 7 23:59", "%G week %V %u %H:%M"
+                ),
+            )
+        )
+    else:
+        plt.xlim(
+            datetime.strptime(title[-10:] + " 00:00", "%Y-%m-%d %H:%M"),
+            datetime.strptime(title[-10:] + " 23:59", "%Y-%m-%d %H:%M"),
+        )
     plt.ylim((0, 18))
     display.plot_grid_lines()
 

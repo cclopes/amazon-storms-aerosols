@@ -8,6 +8,7 @@ Main script to generate 24h quicklooks of MIRA radar data
 
 import sys
 import time
+from pathlib import Path
 from glob import glob
 
 from plot_mira_quicklooks import read_plot_mira_quicklooks
@@ -17,7 +18,15 @@ from plot_mira_quicklooks import read_plot_mira_quicklooks
 data_path = "/home/camila/git/amazon-storms-aerosols/data/radar/mira_campina/"
 
 # Checking quicklooks files (if exists)
-ql_files = sorted(glob(data_path + "figs/*/*.png", recursive=True))
+ql_files = sorted(
+    glob(
+        data_path
+        + "figs/Health/Mira35_Health_Campina_*_"
+        + ("[0-9]" * 2)
+        + "_*.png",
+        recursive=True,
+    )
+)
 if len(ql_files) == 0:
     ql_last = ""
 else:
@@ -39,16 +48,54 @@ if ql_last in data_folders:
         data_ql = data_folders[data_folders.index(ql_last) + 1]
 else:
     data_ql = data_folders[1]
-# print(data_ql)
+data_ql = "2021/11/09"
+print(data_ql)
 
 # Generating quicklooks of data_ql
 files = sorted(glob(data_path + data_ql + "/*.mmclx", recursive=True))
 # print(files)
 if len(files) <= 3:
-    Path(data_path + "quicklooks/" + ql_last + "/").mkdir(
-        parents=True, exist_ok=True
-    )
-    sys.exit("Not enough files to plot")
+    Path(
+        data_path
+        + "figs/Health/Mira35_Health_Campina_"
+        + str(data_ql.split("/")[0])
+        + "_"
+        + str(data_ql.split("/")[1])
+        + "_"
+        + str(data_ql.split("/")[2])
+        + ".png"
+    ).touch()
+    Path(
+        data_path
+        + "figs/Reflectivity/Mira35_Reflectivity_Campina_"
+        + str(data_ql.split("/")[0])
+        + "_"
+        + str(data_ql.split("/")[1])
+        + "_"
+        + str(data_ql.split("/")[2])
+        + ".png"
+    ).touch()
+    Path(
+        data_path
+        + "figs/Vel_Doppler/Mira35_Vel_Doppler_Campina_"
+        + str(data_ql.split("/")[0])
+        + "_"
+        + str(data_ql.split("/")[1])
+        + "_"
+        + str(data_ql.split("/")[2])
+        + ".png"
+    ).touch()
+    Path(
+        data_path
+        + "figs/LDR/Mira35_LDR_Campina_"
+        + str(data_ql.split("/")[0])
+        + "_"
+        + str(data_ql.split("/")[1])
+        + "_"
+        + str(data_ql.split("/")[2])
+        + ".png"
+    ).touch()
+    sys.exit("Not enough files to plot - creating empty plot for " + data_ql)
 
 # Plotting
 bt = time.time()

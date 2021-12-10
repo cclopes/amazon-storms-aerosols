@@ -392,16 +392,21 @@ def read_multi_mira(filenames, for_quicklooks=False, ql_res=5):
     melt_hei : List of dicts of melting layer height
     """
 
+    print("Reading file: ", filenames[0])
     radar, melt_hei, mrm = read_mira(filenames[0], for_quicklooks, ql_res)
     for i in range(1, len(filenames)):
-        radar_i, melt_hei_i, mrm_i = read_mira(
-            filenames[i], for_quicklooks, ql_res
-        )
-        radar = join_radar(radar, radar_i)
-        for j in range(3):
-            melt_hei[j]["data"] = np.ma.append(
-                melt_hei[j]["data"], melt_hei_i[j]["data"]
+        try:
+            print("Reading file: ", filenames[i])
+            radar_i, melt_hei_i, mrm_i = read_mira(
+                filenames[i], for_quicklooks, ql_res
             )
-        mrm["data"] = np.ma.append(mrm["data"], mrm_i["data"])
+            radar = join_radar(radar, radar_i)
+            for j in range(3):
+                melt_hei[j]["data"] = np.ma.append(
+                    melt_hei[j]["data"], melt_hei_i[j]["data"]
+                )
+            mrm["data"] = np.ma.append(mrm["data"], mrm_i["data"])
+        except ZeroDivisionError:
+            pass
 
     return radar, melt_hei, mrm
