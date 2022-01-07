@@ -6,3 +6,5 @@ dependencies:
 - python=3.*
 - arm_pyart
 - scikit-image
+- xarray
+- pandas
