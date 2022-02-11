@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from glob import glob
 
+import numpy as np
 import xarray as xr
 import pandas as pd
 
@@ -135,6 +136,14 @@ def read_mmclx_save_nc(mmclx_filename, nc_filename):
             "zrg": "n_range_gates",
             "drg": "range_resolution",
         }
+    )
+
+    # Convert dBZ variables to dBZ
+    ncfile.filtered_reflectivity.values = 10 * np.log10(
+        ncfile.filtered_reflectivity.values
+    )
+    ncfile.filtered_linear_depolarization_ratio.values = 10 * np.log10(
+        ncfile.filtered_linear_depolarization_ratio.values
     )
 
     # Change attributes of variables
