@@ -1,11 +1,19 @@
 data/radar/
 data/radar
 data/radar.lnk
+data/general
+data/soundings
+data/aerosol
+data/lightning
 
 general_processing/figs/
 
+met_aerosol_processing/figs/
+
 radar_processing/figs/
 radar_processing/__pycache__/
+radar_processing/mira_quicklooks/__pycache__/
+radar_processing/tests_tathu/figs/
 
 tracking/figs/
 tracking/__pycache__/
@@ -19,8 +27,5 @@ renv/
 .Rhistory
 .Rprofile
 renv.lock
-
-radar_processing/mira_quicklooks/__pycache__/
-data/general
-data/soundings
 .RData
+
