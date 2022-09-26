@@ -8,13 +8,18 @@ import os
 import gc
 from datetime import datetime
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import pyart
 
 from read_mira_radar import read_multi_mira
 
 
 def read_plot_mira_quicklooks(
-    filenames, save_path="figs/", res=5, is_weekly_fig=False
+    filenames,
+    save_path="figs/",
+    res=5,
+    is_weekly_fig=False,
+    is_3_week_fig=False,
 ):
     """
     Read and plot several fields of MIRA files for 24h quicklooks.
@@ -40,15 +45,36 @@ def read_plot_mira_quicklooks(
     date = times[0]
     # Generating date for title and fig name
     if is_weekly_fig:
-        date_str = (
-            times[len(times) % 2]._to_real_datetime().date().isocalendar()
-        )
-        if len(str(date_str[1])) == 1:
-            date_str = list(date_str)
-            date_str[1] = "0" + str(date_str[1])
-            date_str = tuple(date_str)
-        date_str = str(date_str[0]) + " week " + str(date_str[1])
-        date_figname = date_str.replace(" ", "_")
+        if is_3_week_fig:
+            date_str = (
+                times[len(times) % 2]._to_real_datetime().date().isocalendar()
+            )
+            if len(str(date_str[1])) == 1:
+                date_str = list(date_str)
+                date_str[1] = "0" + str(date_str[1])
+                date_str = tuple(date_str)
+            date_str = (
+                str(date_str[0])
+                + " weeks "
+                + str(date_str[1])
+                + ", "
+                + str(date_str[1] + 1)
+                + ", "
+                + str(date_str[1] + 2)
+            )
+            print(date_str)
+            date_figname = date_str.replace(" ", "_").replace(",", "")
+            print(date_figname)
+        else:
+            date_str = (
+                times[len(times) % 2]._to_real_datetime().date().isocalendar()
+            )
+            if len(str(date_str[1])) == 1:
+                date_str = list(date_str)
+                date_str[1] = "0" + str(date_str[1])
+                date_str = tuple(date_str)
+            date_str = str(date_str[0]) + " week " + str(date_str[1])
+            date_figname = date_str.replace(" ", "_")
     else:
         date_str = str(date)[:10]
         date_figname = date_str.replace("-", "_")
@@ -69,6 +95,7 @@ def read_plot_mira_quicklooks(
         mrm=mira_mrm["data"] * 1e1,
         figname=save_path + "Health/Mira35_Health_Campina_" + date_figname,
         is_weekly_fig=is_weekly_fig,
+        is_3_week_fig=is_3_week_fig,
         health_fig=True,
     )
 
@@ -85,6 +112,7 @@ def read_plot_mira_quicklooks(
         + "Reflectivity/Mira35_Reflectivity_Campina_"
         + date_figname,
         is_weekly_fig=is_weekly_fig,
+        is_3_week_fig=is_3_week_fig,
         health_fig=False,
     )
 
@@ -101,6 +129,7 @@ def read_plot_mira_quicklooks(
         + "Vel_Doppler/Mira35_Vel_Doppler_Campina_"
         + date_figname,
         is_weekly_fig=is_weekly_fig,
+        is_3_week_fig=is_3_week_fig,
         health_fig=False,
     )
 
@@ -115,6 +144,7 @@ def read_plot_mira_quicklooks(
         mrm=mira_mrm["data"] * 1e1,
         figname=save_path + "LDR/Mira35_LDR_Campina_" + date_figname,
         is_weekly_fig=is_weekly_fig,
+        is_3_week_fig=is_3_week_fig,
         health_fig=False,
     )
 
@@ -133,6 +163,7 @@ def plot_mira_field(
     mrm,
     figname,
     is_weekly_fig=False,
+    is_3_week_fig=False,
     health_fig=False,
 ):
     """
@@ -166,6 +197,7 @@ def plot_mira_field(
 
     # Opening fig()
     fig = plt.figure(figsize=(15, 5))  # (10, 5)
+    ax = plt.axes()
 
     # Plotting
     display.plot_vpt(
@@ -186,16 +218,31 @@ def plot_mira_field(
         plt.axhline(y=15, color="k", linestyle="dashed")
         plt.legend(loc="upper right")
     if is_weekly_fig:
-        plt.xlim(
-            (
-                datetime.strptime(
-                    title[-12:] + " 1 00:00", "%G week %V %u %H:%M"
-                ),
-                datetime.strptime(
-                    title[-12:] + " 7 23:59", "%G week %V %u %H:%M"
-                ),
+        if is_3_week_fig:
+            ax.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+            ax.xaxis.set_minor_locator(mdates.DayLocator())
+            plt.xlim(
+                (
+                    datetime.strptime(
+                        title[-21:-8] + " 1 00:00", "%G weeks %V %u %H:%M"
+                    ),
+                    datetime.strptime(
+                        title[-21:-10] + title[-2:] + " 7 23:59",
+                        "%G weeks %V %u %H:%M",
+                    ),
+                )
             )
-        )
+        else:
+            plt.xlim(
+                (
+                    datetime.strptime(
+                        title[-12:] + " 1 00:00", "%G week %V %u %H:%M"
+                    ),
+                    datetime.strptime(
+                        title[-12:] + " 7 23:59", "%G week %V %u %H:%M"
+                    ),
+                )
+            )
     else:
         plt.xlim(
             datetime.strptime(title[-10:] + " 00:00", "%Y-%m-%d %H:%M"),

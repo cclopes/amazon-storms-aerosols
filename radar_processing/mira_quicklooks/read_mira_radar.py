@@ -123,7 +123,10 @@ def read_mira(
     )
     _range = cfradial._ncvar_to_dict(ncvars["range"])
     if for_quicklooks:
+        print(res)
+        print(time["data"].shape)
         time["data"] = time["data"][::res]
+        print(time["data"].shape)
 
     # 4.5 Ray dimension variables
 
@@ -229,6 +232,17 @@ def read_mira(
             )
             fields[field_name]["units"] = "dBZ"
         if for_quicklooks:
+            if field_name == "Ze":
+                test = block_reduce(
+                        fields[field_name]["data"].astype(float),
+                        block_size=(res, 1),
+                        func=np.nanmax,
+                        cval="nan",
+                    )
+                print(test.shape)
+                print(fields[field_name]["data"].shape)
+                print(time["data"])
+            """
             if field_name in ("VELg", "VEL"):
                 fieldmin = block_reduce(
                     fields[field_name]["data"].astype(float),
@@ -253,6 +267,7 @@ def read_mira(
                     func=np.nanmax,
                     cval="nan",
                 )
+            """
 
     # 4.5 instrument_parameters sub-convention -> instrument_parameters dict
     # this section needed multiple changes and/or additions since the
