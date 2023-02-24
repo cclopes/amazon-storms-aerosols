@@ -18,6 +18,22 @@ import numpy as np
 from pyart.core.grid import Grid
 
 
+def read_simple_cappi(filename, latlon_path):
+    """Reading binary CAPPI grids produced by CPTEC to array"""
+
+    # Reading data
+    cappis = np.fromfile(filename, dtype="float32").reshape(15, 500, 500)[:, ::2, ::2]
+
+    # Reading lat/lon files
+    lon_grid = np.fromfile(latlon_path + "/lon_SBMN_500.txt", sep="   ").reshape(
+        500, 500
+    )[::2, ::2]
+    lat_grid = np.fromfile(latlon_path + "/lat_SBMN_500.txt", sep="   ").reshape(
+        500, 500
+    )[::2, ::2]
+    return cappis, [lon_grid, lat_grid]
+
+
 def read_sipam_cappi(
     filename,
     exclude_fields=[
@@ -92,20 +108,20 @@ def read_sipam_cappi(
     ]
 
     # dset = netCDF4.Dataset(filename, mode="r")
-    dset = np.fromfile(filename, dtype="float32").reshape(15,500,500)[:,::2,::2]
+    dset = np.fromfile(filename, dtype="float32").reshape(15, 500, 500)[:, ::2, ::2]
     # dset[dset == -99.] = np.nan
 
     # metadata
     metadata = {
         "institution": "DSA/CPTEC-INPE",
-        "source": "http://ftp.cptec.inpe.br/chuva/goamazon/experimental/level_2/eq_radar/esp_band_s/st_sipam/"
+        "source": "http://ftp.cptec.inpe.br/chuva/goamazon/experimental/level_2/eq_radar/esp_band_s/st_sipam/",
     }
 
     # required reserved variables
     file_time = datetime.strptime(re.findall(r"\d{12}", filename)[0], "%Y%m%d%H%M%S")
     time = {
         "units": "seconds since 1970-01-01T00:00:00Z",
-        "data": [file_time.timestamp()]
+        "data": [file_time.timestamp()],
     }
     origin_latitude = {
         "data": [-3.1493],
@@ -118,12 +134,9 @@ def read_sipam_cappi(
         "units": "degree_E",
     }
     origin_altitude = None
-    x = {"data": np.arange(-250000, 250000, 2000),
-         "units": "m"}
-    y = {"data": np.arange(-250000, 250000, 2000),
-         "units": "m"}
-    z = {"data": np.arange(2000, 17000, 1000),
-         "units": "m"}
+    x = {"data": np.arange(-250000, 250000, 2000), "units": "m"}
+    y = {"data": np.arange(-250000, 250000, 2000), "units": "m"}
+    z = {"data": np.arange(2000, 17000, 1000), "units": "m"}
 
     # projection
     projection = {"data": [], "proj": "aeqd", "_include_lon_0_lat_0": "true"}
@@ -136,11 +149,11 @@ def read_sipam_cappi(
     # read in the fields
     fields = {
         "corrected_reflectivity": {
-            "_FillValue": -99.,
+            "_FillValue": -99.0,
             "standard_name": "Corrected Reflectivity",
             "long_name": "Corrected Reflectivity",
             "units": "dBZ",
-            "data": dset
+            "data": dset,
         }
     }
 
@@ -184,4 +197,3 @@ def read_sipam_cappi(
         radar_name=radar_name,
         radar_time=radar_time,
     )
-
