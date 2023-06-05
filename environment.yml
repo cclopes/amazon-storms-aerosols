@@ -8,3 +8,4 @@ dependencies:
 - arm_pyart
 - cartopy
 - h5py
+- metpy
