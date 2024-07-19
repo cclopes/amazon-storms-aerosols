@@ -195,6 +195,16 @@ T3_ring_50 <- dfCircle(
     select(latitude) %>% 
     deframe, 
   50)
+T1_ring <- dfCircle(
+  goam_sites %>% 
+    filter(goamazon_reference == "Tl" & has == "has_aerosol") %>% 
+    select(longitude) %>% 
+    deframe,
+  goam_sites %>% 
+    filter(goamazon_reference == "Tl" & has == "has_aerosol") %>% 
+    select(latitude) %>% 
+    deframe, 
+  30)
 
 # HYSPLIT trajectories
 hysplit_fwd_2014 <- read_csv("./data/hysplit_2014_forward_paths.csv")
@@ -272,38 +282,44 @@ ggplot() +
   #   size = 0.5,
   #   color = "black"
   # ) +
-  geom_path( #- T3 radar range ring
-    data = T3_ring_200,
-    aes(lon, lat),
-    size = 0.5,
-    color = "black"
-  ) +
-  geom_path( #- T3 radar range ring
-    data = T3_ring_150,
-    aes(lon, lat),
-    size = 0.5,
-    color = "black"
-  ) +
-  geom_path( #- T3 radar range ring
-    data = T3_ring_100,
-    aes(lon, lat),
-    size = 0.5,
-    color = "black"
-  ) +
-  geom_path( #- T3 radar range ring
-    data = T3_ring_50,
+  # geom_path( #- T3 radar range ring
+  #   data = T3_ring_200,
+  #   aes(lon, lat),
+  #   size = 0.5,
+  #   color = "black"
+  # ) +
+  # geom_path( #- T3 radar range ring
+  #   data = T3_ring_150,
+  #   aes(lon, lat),
+  #   size = 0.5,
+  #   color = "black"
+  # ) +
+  # geom_path( #- T3 radar range ring
+  #   data = T3_ring_100,
+  #   aes(lon, lat),
+  #   size = 0.5,
+  #   color = "black"
+  # ) +
+  # geom_path( #- T3 radar range ring
+  #   data = T3_ring_50,
+  #   aes(lon, lat),
+  #   size = 0.5,
+  #   color = "black"
+  # ) +
+  geom_path( #- T1 radar range ring
+    data = T1_ring,
     aes(lon, lat),
     size = 0.5,
     color = "black"
   ) +
   geom_point( #- GoAmazon sites locations
-    data = goam_sites %>% filter(goamazon_reference %in% c("T3") & has == "has_aerosol"),
+    data = goam_sites %>% filter(goamazon_reference %in% c("T3", "Tl", "T2") & has == "has_aerosol"),
     aes(longitude, latitude),
     shape = 16,
     size = 2
   ) +
   geom_text( #- GoAmazon sites labels
-    data = goam_sites %>% filter(goamazon_reference %in% c("T3") & has == "has_aerosol"),
+    data = goam_sites %>% filter(goamazon_reference %in% c("T3", "Tl", "T2") & has == "has_aerosol"),
     aes(longitude, latitude, label = goamazon_reference),
     position = position_dodge2(0.25, preserve = "single"),
     vjust = -0.5,
