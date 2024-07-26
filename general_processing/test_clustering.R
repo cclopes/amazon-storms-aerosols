@@ -1,12 +1,13 @@
 library(readr)
 library(dplyr)
+library(tidyr)
 library(FactoMineR)
 library(Factoshiny)
 
 # Data with categorical vars
 systems_25km <- read_csv("/home/camilacl/git/amazon-storms-aerosols/data/general/systems_filtered_25km.csv",
                          col_types = cols(date_init = col_datetime(format = "%Y-%m-%d %H:%M:%S")),
-                         )
+                         ) %>% drop_na()
 systems_10km <- read_csv("/home/camilacl/git/amazon-storms-aerosols/data/general/systems_filtered_10km.csv", 
                                   col_types = cols(date_init = col_datetime(format = "%Y-%m-%d %H:%M:%S")))
 
@@ -27,7 +28,7 @@ plot.MFA(res.MFA, choix="ind",lab.par=FALSE,title="Individual factor map")
 plot.MFA(res.MFA, choix="var",habillage='group',title="Correlation circle")
 plot.MFA(res.MFA, choix="group")
 plot.MFA(res.MFA, choix="axes",habillage='group')
-res.HCPC<-HCPC(res.MFA,nb.clust=10,consol=TRUE,graph=FALSE,description=TRUE,order=FALSE)
+res.HCPC<-HCPC(res.MFA,nb.clust=6,consol=TRUE,graph=FALSE,description=TRUE,order=FALSE)
 plot.HCPC(res.HCPC,choice='tree',title='Hierarchical tree')
 plot.HCPC(res.HCPC,choice='map',draw.tree=FALSE,title='Factor map')
 plot.HCPC(res.HCPC,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='Hierarchical tree on the factor map')
@@ -40,11 +41,11 @@ Factoshiny::HCPCshiny(res.MFA)
 clusters_systems_25km <- res.HCPC$data.clust
 clusters_systems_25km$name <- systems_25km$name
 clusters_systems_25km %>% 
-  filter(clust %in% c(1,6,9)) %>% 
+  filter(clust %in% c(1,2,4,5)) %>% 
   relocate(clust) %>% 
   relocate(name) %>% 
   write.csv(
-    "/home/camilacl/git/amazon-storms-aerosols/general_processing/clusters_aero_systems_25km.csv", 
+    "/home/camilacl/git/amazon-storms-aerosols/data/general/clusters_aero_systems_25km.csv", 
     row.names = FALSE)
 
 # Analyzing file
