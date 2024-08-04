@@ -30,3 +30,9 @@ renv/
 renv.lock
 .RData
 
+general_processing/.ipynb_checkpoints/read_plot_soundings-checkpoint.ipynb
+radar_processing/.ipynb_checkpoints/compare_arm_cptec_cappi-checkpoint.ipynb
+radar_processing/.ipynb_checkpoints/quick_plot_mira-checkpoint.ipynb
+radar_processing/.ipynb_checkpoints/test_cappis-checkpoint.ipynb
+radar_processing/.ipynb_checkpoints/test_radar_files-checkpoint.ipynb
+radar_processing/.ipynb_checkpoints/testing_basic_netcdf_open-checkpoint.ipynb

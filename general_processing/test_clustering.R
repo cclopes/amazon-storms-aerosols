@@ -3,6 +3,9 @@ library(dplyr)
 library(tidyr)
 library(FactoMineR)
 library(Factoshiny)
+library(ggplot2)
+library(stringr)
+library(cowplot)
 
 # Data with categorical vars
 systems_25km <- read_csv("/home/camilacl/git/amazon-storms-aerosols/data/general/systems_filtered_25km.csv",
@@ -40,6 +43,7 @@ Factoshiny::HCPCshiny(res.MFA)
 # Extracting clusters and saving to file
 clusters_systems_25km <- res.HCPC$data.clust
 clusters_systems_25km$name <- systems_25km$name
+clusters_systems_25km$`max area` <- systems_25km$`max area`
 clusters_systems_25km %>% 
   filter(clust %in% c(1,2,4,5)) %>% 
   relocate(clust) %>% 
@@ -47,15 +51,4 @@ clusters_systems_25km %>%
   write.csv(
     "/home/camilacl/git/amazon-storms-aerosols/data/general/clusters_aero_systems_25km.csv", 
     row.names = FALSE)
-
-# Analyzing file
-clusters_aero_systems_25km$clust <- as.factor(clusters_aero_systems_25km$clust)
-clusters_aero_systems_25km$area <- as.factor(clusters_aero_systems_25km$area)
-clusters_aero_systems_25km$reflectivity <- as.factor(clusters_aero_systems_25km$reflectivity)
-clusters_aero_systems_25km$lifespan <- as.factor(clusters_aero_systems_25km$lifespan)
-clusters_aero_systems_25km$`sys duration` <- as.factor(clusters_aero_systems_25km$`sys duration`)
-clusters_aero_systems_25km$season <- as.factor(clusters_aero_systems_25km$season)
-clusters_aero_systems_25km$`time of day` <- as.factor(clusters_aero_systems_25km$`time of day`)
-clusters_aero_systems_25km$`electrical activity` <- as.factor(clusters_aero_systems_25km$`electrical activity`)
-tapply(clusters_aero_systems_25km %>% select(!clust), clusters_aero_systems_25km$clust, summary)
 
