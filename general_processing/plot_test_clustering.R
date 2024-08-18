@@ -5,23 +5,31 @@ library(ggplot2)
 library(stringr)
 library(cowplot)
 
-# Analyzing files
+# Reading files
 clusters_aero_systems_25km <- read_csv("/home/camilacl/git/amazon-storms-aerosols/data/general/clusters_aero_systems_25km.csv")
-clusters_aero_systems_25km$clust <- as.factor(clusters_aero_systems_25km$clust)
-clusters_aero_systems_25km$area <- as.factor(clusters_aero_systems_25km$area)
-clusters_aero_systems_25km$reflectivity <- as.factor(clusters_aero_systems_25km$reflectivity)
-clusters_aero_systems_25km$lifespan <- as.factor(clusters_aero_systems_25km$lifespan)
-clusters_aero_systems_25km$`sys duration` <- as.factor(clusters_aero_systems_25km$`sys duration`)
-clusters_aero_systems_25km$season <- as.factor(clusters_aero_systems_25km$season)
-clusters_aero_systems_25km$`time of day` <- as.factor(clusters_aero_systems_25km$`time of day`)
-clusters_aero_systems_25km$`electrical activity` <- as.factor(clusters_aero_systems_25km$`electrical activity`)
+clusters_all_25km <- read_csv("/home/camilacl/git/amazon-storms-aerosols/data/general/clusters_all_25km.csv")
+clusters_aero_systems_10km <- read_csv("/home/camilacl/git/amazon-storms-aerosols/data/general/clusters_aero_systems_10km.csv")
+clusters_all_10km <- read_csv("/home/camilacl/git/amazon-storms-aerosols/data/general/clusters_all_10km.csv")
 
-clusters_all_25km <- read_csv("data/general/clusters_all_25km.csv")
-clusters_all_25km$clust <- as.factor(clusters_all_25km$clust)
+# Analyzing files
 
-tapply(clusters_aero_systems_25km %>% select(!clust), clusters_aero_systems_25km$clust, summary)
+clusters_aero_systems <- clusters_aero_systems_10km
+clusters_all <- clusters_all_10km
 
-clust_df <- clusters_aero_systems_25km %>% 
+clusters_aero_systems$clust <- as.factor(clusters_aero_systems$clust)
+clusters_aero_systems$area <- as.factor(clusters_aero_systems$area)
+clusters_aero_systems$reflectivity <- as.factor(clusters_aero_systems$reflectivity)
+clusters_aero_systems$lifespan <- as.factor(clusters_aero_systems$lifespan)
+clusters_aero_systems$`sys duration` <- as.factor(clusters_aero_systems$`sys duration`)
+clusters_aero_systems$season <- as.factor(clusters_aero_systems$season)
+clusters_aero_systems$`time of day` <- as.factor(clusters_aero_systems$`time of day`)
+clusters_aero_systems$`electrical activity` <- as.factor(clusters_aero_systems$`electrical activity`)
+
+clusters_all$clust <- as.factor(clusters_all$clust)
+
+# tapply(clusters_aero_systems %>% select(!clust), clusters_aero_systems$clust, summary)
+
+clust_df <- clusters_aero_systems %>% 
   group_by(clust) %>% 
   count() %>% 
   unite("c", clust, n, sep = " - ", remove = F) %>% 
@@ -29,9 +37,9 @@ clust_df <- clusters_aero_systems_25km %>%
   mutate(clust = as.character(clust))
 clust_n <- clust_df$c
 names(clust_n) <- clust_df$clust
-clusters_aero_systems_25km$clust_c <- clust_n[as.character(clusters_aero_systems_25km$clust)]
+clusters_aero_systems$clust_c <- clust_n[as.character(clusters_aero_systems$clust)]
 
-clust_df <- clusters_all_25km %>% 
+clust_df <- clusters_all %>% 
   group_by(clust) %>% 
   count() %>% 
   unite("c", clust, n, sep = " - ", remove = F) %>% 
@@ -39,10 +47,10 @@ clust_df <- clusters_all_25km %>%
   mutate(clust = as.character(clust))
 clust_n <- clust_df$c
 names(clust_n) <- clust_df$clust
-clusters_all_25km$clust_c <- clust_n[as.character(clusters_all_25km$clust)]
+clusters_all$clust_c <- clust_n[as.character(clusters_all$clust)]
 
-clust_nas <- clusters_all_25km %>% 
-  mutate(clust_c = clust_n[as.character(clusters_all_25km$clust)]) %>% 
+clust_nas <- clusters_all %>% 
+  mutate(clust_c = clust_n[as.character(clusters_all$clust)]) %>% 
   group_by(clust_c) %>% 
   summarise(
     `0 dBZ` = sum(is.na(echotop0)),
@@ -59,37 +67,38 @@ clust_nas <- clusters_all_25km %>%
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 
-c1 <- clusters_aero_systems_25km %>% 
-  filter(clust == 1) %>% 
-  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>% 
-  gather('category', 'value') %>% 
-  group_by(category, value) %>% 
-  count() %>% 
-  mutate(
-    category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
-    value = str_replace_all(value, "_", " "),
-    value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium_span'))
-  ) %>% 
-  ggplot(aes(x = n, y = category, fill = value, group = value)) +
-  geom_col(alpha = 0.7, color = 'black') +
-  geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
-  scale_fill_manual(
-    values = c('gold', 'gray', 'azure3', 'azure', 'azure', 'azure', 'red', 'yellowgreen', 'yellow', 'midnightblue', 'azure'),
-    guide = "none")+
-  labs(x = '', y = '', title = paste0('Cluster 1 - ', clusters_aero_systems_25km %>% filter(clust == 1) %>% nrow(), ' cases'))
-# ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_1_25km.png')
-
-c2 <- clusters_aero_systems_25km %>% 
-  filter(clust == 2) %>% 
-  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>% 
-  gather('category', 'value') %>% 
-  group_by(category, value) %>% 
-  count() %>% 
+# 25 km
+c1 <- clusters_aero_systems %>%
+  filter(clust == 1) %>%
+  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+  gather('category', 'value') %>%
+  group_by(category, value) %>%
+  count() %>%
   mutate(
     category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
     value = str_replace_all(value, "_", " "),
     value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span'))
-  ) %>% 
+  ) %>%
+  ggplot(aes(x = n, y = category, fill = value, group = value)) +
+  geom_col(alpha = 0.7, color = 'black') +
+  geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
+  scale_fill_manual(
+    values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'red', 'yellowgreen', 'yellow', 'midnightblue', 'azure'),
+    guide = "none")+
+  labs(x = '', y = '', title = paste0('Cluster 1 - ', clusters_aero_systems %>% filter(clust == 1) %>% nrow(), ' cases'))
+# ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_1_25km.png')
+
+c2 <- clusters_aero_systems %>%
+  filter(clust == 2) %>%
+  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+  gather('category', 'value') %>%
+  group_by(category, value) %>%
+  count() %>%
+  mutate(
+    category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
+    value = str_replace_all(value, "_", " "),
+    value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span'))
+  ) %>%
   ggplot(aes(x = n, y = category, fill = value, group = value)) +
   geom_col(alpha = 0.7, color = 'black') +
   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
@@ -97,40 +106,40 @@ c2 <- clusters_aero_systems_25km %>%
     values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'azure3', 'red', 'dodgerblue', 'yellow', 'midnightblue', 'azure', 'azure3'),
     guide = "none") +
   scale_y_discrete(labels = NULL) +
-  labs(x = '', y = '', title = paste0('Cluster 2 - ', clusters_aero_systems_25km %>% filter(clust == 2) %>% nrow(), ' cases'))
+  labs(x = '', y = '', title = paste0('Cluster 2 - ', clusters_aero_systems %>% filter(clust == 2) %>% nrow(), ' cases'))
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_2_25km.png')
 
-c4 <- clusters_aero_systems_25km %>% 
-  filter(clust == 4) %>% 
-  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>% 
-  gather('category', 'value') %>% 
-  group_by(category, value) %>% 
-  count() %>% 
+c4 <- clusters_aero_systems %>%
+  filter(clust == 4) %>%
+  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+  gather('category', 'value') %>%
+  group_by(category, value) %>%
+  count() %>%
   mutate(
     category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
     value = str_replace_all(value, "_", " "),
     value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span'))
-  ) %>% 
+  ) %>%
   ggplot(aes(x = n, y = category, fill = value, group = value)) +
   geom_col(alpha = 0.7, color = 'black') +
   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
   scale_fill_manual(
     values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'azure3', 'yellowgreen', 'dodgerblue', 'yellow', 'midnightblue', 'azure', 'azure3'),
     guide = "none") +
-  labs(x = 'Number of cases', y = '', title = paste0('Cluster 4 - ', clusters_aero_systems_25km %>% filter(clust == 4) %>% nrow(), ' cases'))
+  labs(x = 'Number of cases', y = '', title = paste0('Cluster 4 - ', clusters_aero_systems %>% filter(clust == 4) %>% nrow(), ' cases'))
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_4_25km.png')
 
-c5 <- clusters_aero_systems_25km %>% 
-  filter(clust == 5) %>% 
-  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>% 
-  gather('category', 'value') %>% 
-  group_by(category, value) %>% 
-  count() %>% 
+c5 <- clusters_aero_systems %>%
+  filter(clust == 5) %>%
+  select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+  gather('category', 'value') %>%
+  group_by(category, value) %>%
+  count() %>%
   mutate(
     category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
     value = str_replace_all(value, "_", " "),
     value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span'))
-  ) %>% 
+  ) %>%
   ggplot(aes(x = n, y = category, fill = value, group = value)) +
   geom_col(alpha = 0.7, color = 'black') +
   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
@@ -138,13 +147,97 @@ c5 <- clusters_aero_systems_25km %>%
     values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'azure3', 'yellowgreen', 'dodgerblue', 'yellow', 'midnightblue', 'azure', 'azure3'),
     guide = "none") +
   scale_y_discrete(labels = NULL) +
-  labs(x = 'Number of cases', y = '', title = paste0('Cluster 5 - ', clusters_aero_systems_25km %>% filter(clust == 5) %>% nrow(), ' cases'))
+  labs(x = 'Number of cases', y = '', title = paste0('Cluster 5 - ', clusters_aero_systems %>% filter(clust == 5) %>% nrow(), ' cases'))
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_5_25km.png')
 
-cowplot::plot_grid(c1, c2, c4, c5, rel_widths = c(1.3,1,1.3,1))
-ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/categories_clusters_25km.png', height = 8)
+# 10 km
+# c1 <- clusters_aero_systems %>%
+#   filter(clust == 2) %>%
+#   select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+#   gather('category', 'value') %>%
+#   group_by(category, value) %>%
+#   count() %>%
+#   mutate(
+#     category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
+#     value = str_replace_all(value, "_", " "),
+#     value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span', 'large span'))
+#   ) %>%
+#   ggplot(aes(x = n, y = category, fill = value, group = value)) +
+#   geom_col(alpha = 0.7, color = 'black') +
+#   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
+#   scale_fill_manual(
+#     values = c('gold', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'azure3', 'red', 'yellow', 'midnightblue', 'azure', 'azure3'),
+#     guide = "none")+
+#   labs(x = '', y = '', title = paste0('Cluster 2 - ', clusters_aero_systems %>% filter(clust == 2) %>% nrow(), ' cases'))
+# # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_1_25km.png')
+# 
+# c2 <- clusters_aero_systems %>%
+#   filter(clust == 3) %>%
+#   select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+#   gather('category', 'value') %>%
+#   group_by(category, value) %>%
+#   count() %>%
+#   mutate(
+#     category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
+#     value = str_replace_all(value, "_", " "),
+#     value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span', 'large span'))
+#   ) %>%
+#   ggplot(aes(x = n, y = category, fill = value, group = value)) +
+#   geom_col(alpha = 0.7, color = 'black') +
+#   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
+#   scale_fill_manual(
+#     values = c('gold', 'gray', 'azure3', 'azure', 'azure', 'azure', 'azure3', 'red', 'yellowgreen', 'dodgerblue', 'yellow', 'midnightblue', 'azure', 'azure3', 'azure4'),
+#     guide = "none") +
+#   scale_y_discrete(labels = NULL) +
+#   labs(x = '', y = '', title = paste0('Cluster 3 - ', clusters_aero_systems %>% filter(clust == 3) %>% nrow(), ' cases'))
+# # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_2_25km.png')
+# 
+# c4 <- clusters_aero_systems %>%
+#   filter(clust == 4) %>%
+#   select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+#   gather('category', 'value') %>%
+#   group_by(category, value) %>%
+#   count() %>%
+#   mutate(
+#     category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
+#     value = str_replace_all(value, "_", " "),
+#     value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span', 'large span'))
+#   ) %>%
+#   ggplot(aes(x = n, y = category, fill = value, group = value)) +
+#   geom_col(alpha = 0.7, color = 'black') +
+#   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
+#   scale_fill_manual(
+#     values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'azure3', 'yellowgreen', 'dodgerblue', 'yellow', 'midnightblue', 'azure', 'azure3'),
+#     guide = "none") +
+#   labs(x = 'Number of cases', y = '', title = paste0('Cluster 4 - ', clusters_aero_systems %>% filter(clust == 4) %>% nrow(), ' cases'))
+# # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_4_25km.png')
+# 
+# c5 <- clusters_aero_systems %>%
+#   filter(clust == 5) %>%
+#   select(c(`sys duration`, `time of day`, season, area, lifespan, reflectivity, `electrical activity`)) %>%
+#   gather('category', 'value') %>%
+#   group_by(category, value) %>%
+#   count() %>%
+#   mutate(
+#     category = factor(category, levels = c('electrical activity', 'reflectivity', 'lifespan', 'area', 'season', 'time of day', 'sys duration')),
+#     value = str_replace_all(value, "_", " "),
+#     value = factor(value, levels = c('with lightning', 'without lightning', 'intense', 'no intense', 'no splitmerge', 'with splitmerge', 'small', 'large', 'dry', 'dry-to-wet', 'wet', 'diurnal', 'nocturnal', 'short span', 'medium span', 'large span'))
+#   ) %>%
+#   ggplot(aes(x = n, y = category, fill = value, group = value)) +
+#   geom_col(alpha = 0.7, color = 'black') +
+#   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
+#   scale_fill_manual(
+#     values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'azure3', 'yellowgreen', 'dodgerblue', 'yellow', 'midnightblue', 'azure', 'azure3', 'azure4'),
+#     guide = "none") +
+#   scale_y_discrete(labels = NULL) +
+#   labs(x = 'Number of cases', y = '', title = paste0('Cluster 5 - ', clusters_aero_systems %>% filter(clust == 5) %>% nrow(), ' cases'))
+# # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cats_cluster_5_25km.png')
 
-echotop <- clusters_aero_systems_25km %>%
+cowplot::plot_grid(c1, c2, c4, c5, rel_widths = c(1.2,1,1.2,1), labels = 'auto')
+ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/categories_clusters_25km.png', height = 7, width = 9.5)
+# ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/categories_clusters_10km.png', height = 7, width = 9.5)
+
+echotop <- clusters_aero_systems %>%
   select(c(clust_c, `max echotop 0 dBZ`, `max echotop 20 dBZ`, `max echotop 40 dBZ`)) %>% 
   gather('max echotop', 'value', -clust_c) %>% 
   mutate(
@@ -160,7 +253,7 @@ echotop <- clusters_aero_systems_25km %>%
   labs(x = 'Max echotop', y = 'Height (km)', size = "Cases")
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/max_echotop_clusters_25km.png', height = 5)
 
-echotop_all <- clusters_all_25km %>%
+echotop_all <- clusters_all %>%
   select(c(clust_c, echotop20, echotop0, echotop40)) %>% 
   gather('echotop', 'value', -clust_c) %>% 
   mutate(
@@ -178,7 +271,7 @@ echotop_all <- clusters_all_25km %>%
   labs(x = 'Echotop', y = 'Height (km)', size = "Cases")
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/gld_strmin_clusters_25km.png', height = 3)
 
-vi <- clusters_aero_systems_25km %>%
+vi <- clusters_aero_systems %>%
   select(c(clust_c, `max VIL`, `max VII`, `max VIWL`)) %>% 
   gather('max_vi', 'value', -clust_c) %>% 
   mutate(
@@ -194,7 +287,7 @@ vi <- clusters_aero_systems_25km %>%
   labs(y = 'kg/m²')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/max_vi_clusters_25km.png', height = 5)
 
-vi_all <- clusters_all_25km %>%
+vi_all <- clusters_all %>%
   select(c(clust_c, vil, vii, viwl)) %>% 
   gather('vi', 'value', -clust_c) %>% 
   mutate(
@@ -211,7 +304,7 @@ vi_all <- clusters_all_25km %>%
   facet_grid(~clust_c) + 
   labs(y = 'kg/m²')
 
-area <- clusters_aero_systems_25km %>%
+area <- clusters_aero_systems %>%
   select(c(clust_c, `max area`)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -225,7 +318,7 @@ area <- clusters_aero_systems_25km %>%
   labs(y = 'Max area (km²)')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/gld_clusters_25km.png', height = 5)
 
-gld <- clusters_aero_systems_25km %>%
+gld <- clusters_aero_systems %>%
   select(c(clust_c, `GLD strokes`)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -240,7 +333,7 @@ gld <- clusters_aero_systems_25km %>%
   labs(y = 'GLD strokes')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/gld_clusters_25km.png', height = 5)
 
-gld_all <- clusters_all_25km %>%
+gld_all <- clusters_all %>%
   select(c(clust_c, gld_strmin)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -255,7 +348,7 @@ gld_all <- clusters_all_25km %>%
   labs(y = 'strokes/min')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/gld_strmin_clusters_25km.png', height = 5)
 
-cape <- clusters_aero_systems_25km %>%
+cape <- clusters_aero_systems %>%
   select(c(clust_c, CAPE)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -269,7 +362,7 @@ cape <- clusters_aero_systems_25km %>%
   labs(y = 'CAPE (J/kg)')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cape_clusters_25km.png', height = 5)
 
-cin <- clusters_aero_systems_25km %>%
+cin <- clusters_aero_systems %>%
   select(c(clust_c, CIN)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -283,7 +376,7 @@ cin <- clusters_aero_systems_25km %>%
   labs(y = 'CIN (J/kg)')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/cin_clusters_25km.png', height = 5)
 
-reflec <- clusters_aero_systems_25km %>%
+reflec <- clusters_aero_systems %>%
   select(c(clust_c, `max reflectivity`)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -297,7 +390,7 @@ reflec <- clusters_aero_systems_25km %>%
   labs(y = 'Max reflectivity (dBZ)')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/reflectivity_clusters_25km.png', height = 5)
 
-blrh <- clusters_aero_systems_25km %>%
+blrh <- clusters_aero_systems %>%
   select(c(clust_c, `bl relative humidity`)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -311,7 +404,7 @@ blrh <- clusters_aero_systems_25km %>%
   labs(y = 'BL relative humidity (%)')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/reflectivity_clusters_25km.png', height = 5)
 
-lvws <- clusters_aero_systems_25km %>%
+lvws <- clusters_aero_systems %>%
   select(c(clust_c, `v-wind shear`)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -325,7 +418,7 @@ lvws <- clusters_aero_systems_25km %>%
   labs(y = 'LL v-wind shear (m/s)')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/reflectivity_clusters_25km.png', height = 5)
 
-wcd <- clusters_aero_systems_25km %>%
+wcd <- clusters_aero_systems %>%
   select(c(clust_c, `warm cloud depth`)) %>% 
   mutate(
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
@@ -339,11 +432,11 @@ wcd <- clusters_aero_systems_25km %>%
   labs(y = 'Warm cloud depth (km)')
 # ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/reflectivity_clusters_25km.png', height = 5)
 
-aerosols <- clusters_aero_systems_25km %>%
-  select(c(clust_c, `total aerosols`, `ultrafine aerosols`, `total CCNs`)) %>% 
+aerosols <- clusters_aero_systems %>%
+  select(c(clust_c, `total aerosols`, `sub-50nm aerosols`, `total CCNs`)) %>% 
   gather('aerosols', 'value', -clust_c) %>% 
   mutate(
-    aerosols = str_replace_all(aerosols, "ultrafine", "sub-50nm"),
+    aerosols = str_replace_all(aerosols, "sub-50nm", "sub-50nm"),
     aerosols = factor(aerosols, levels = c('total aerosols', 'sub-50nm aerosols', 'total CCNs')),
     clust_c = paste("Cluster", clust_c, "cases")) %>% 
   ggplot() +
@@ -355,14 +448,24 @@ aerosols <- clusters_aero_systems_25km %>%
   theme(axis.title.x=element_blank()) +
   facet_grid(~clust_c) +
   labs(y = expression(~cm^{-3}))
-ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/aerosols_clusters_25km.png', height = 3)
+# ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/aerosols_clusters_25km.png', height = 3)
+ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/aerosols_clusters_10km.png', height = 3, width = 9)
+
+# cowplot::plot_grid(area, reflec, echotop, vi, gld, labels = 'auto', ncol = 1, rel_heights = c(1,1,1.1,1.04,1), axis = 'l', align = 'v')
+# ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/convection_clusters_25km.png', height = 11)
+# 
+# cowplot::plot_grid(area, reflec, echotop_all, vi_all, gld, labels = 'auto', ncol = 1, rel_heights = c(1,1,1.1,1.04,1), axis = 'l', align = 'v')
+# ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/convection_clusters_withall_25km.png', height = 11)
+# 
+# cowplot::plot_grid(cape, cin, blrh, lvws, wcd, labels = 'auto', ncol = 1, axis = 'l', align = 'v')
+# ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/initiation_clusters_25km.png', height = 10)
 
 cowplot::plot_grid(area, reflec, echotop, vi, gld, labels = 'auto', ncol = 1, rel_heights = c(1,1,1.1,1.04,1), axis = 'l', align = 'v')
-ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/convection_clusters_25km.png', height = 11)
+ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/convection_clusters_10km.png', height = 11)
 
 cowplot::plot_grid(area, reflec, echotop_all, vi_all, gld, labels = 'auto', ncol = 1, rel_heights = c(1,1,1.1,1.04,1), axis = 'l', align = 'v')
-ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/convection_clusters_withall_25km.png', height = 11)
+ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/convection_clusters_withall_10km.png', height = 11)
 
 cowplot::plot_grid(cape, cin, blrh, lvws, wcd, labels = 'auto', ncol = 1, axis = 'l', align = 'v')
-ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/initiation_clusters_25km.png', height = 10)
+ggsave('/home/camilacl/git/amazon-storms-aerosols/general_processing/figs/initiation_clusters_10km.png', height = 10)
 
