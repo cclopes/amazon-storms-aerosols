@@ -27,9 +27,9 @@ systems_25km$`electrical activity` <- as.factor(systems_25km$`electrical activit
 
 Factoshiny::MFAshiny(systems_25km)
 # Results for above line
-newDF <- systems_25km[,c("sys duration","time of day","season","area","lifespan","max reflectivity","max echotop 0 dBZ","max echotop 20 dBZ","max echotop 40 dBZ","max VIL","max VII","max VIWL","GLD strokes","CAPE","CIN","bl relative humidity","v-wind shear","warm cloud depth","total aerosols","sub-50nm aerosols","total CCNs","reflectivity","electrical activity")]
-res.MFA<-MFA(newDF,group=c(3,2,8,5,3,2), type=c("n","n","s","s","s","n"),ncp=3,name.group=c("convection_time","convection_geom","convection_int","initiation_thermo","initiation_aero","supplement_conv"),num.group.sup=c(6),graph=FALSE)
-res.HCPC<-HCPC(res.MFA,nb.clust=6,consol=TRUE,graph=FALSE,description=TRUE,order=FALSE)
+newDF <- systems_25km[,c("sys duration","time of day","season","area","lifespan","max reflectivity","max echotop 0 dBZ","max echotop 20 dBZ","max echotop 40 dBZ","max VIL","max VII","max VIWL","GLD strokes","CAPE","CIN","bl relative humidity","v-wind shear","warm cloud depth","total aerosols","sub-50nm aerosols","reflectivity","electrical activity")]
+res.MFA<-MFA(newDF,group=c(3,2,8,5,2,2), type=c("n","n","s","s","s","n"),ncp=3,name.group=c("convection_time","convection_geom","convection_int","initiation_thermo","initiation_aero","supplement_conv"),num.group.sup=c(6),graph=FALSE)
+res.HCPC<-HCPC(res.MFA,nb.clust=5,consol=TRUE,graph=FALSE,description=TRUE,order=FALSE)
 
 # Reproducing apps
 Factoshiny::MFAshiny(res.MFA)
@@ -58,7 +58,7 @@ clusters_systems_25km <- res.HCPC$data.clust
 clusters_systems_25km$name <- systems_25km$name
 clusters_systems_25km$`max area` <- systems_25km$`max area`
 clusters_systems_25km %>% 
-  filter(clust %in% c(1,2,4,5)) %>% 
+  filter(clust %in% c(1,2,3,4)) %>% 
   relocate(clust) %>% 
   relocate(name) %>% 
   write.csv(
@@ -76,8 +76,8 @@ systems_10km$`electrical activity` <- as.factor(systems_10km$`electrical activit
 
 Factoshiny::MFAshiny(systems_10km)
 # Results for above line
-newDF <- systems_10km[,c("sys duration","time of day","season","area","lifespan","max reflectivity","max echotop 0 dBZ","max echotop 20 dBZ","max echotop 40 dBZ","max VIL","max VII","max VIWL","GLD strokes","CAPE","CIN","bl relative humidity","v-wind shear","warm cloud depth","total aerosols","sub-50nm aerosols","total CCNs","reflectivity","electrical activity")]
-res.MFA<-MFA(newDF,group=c(3,2,8,5,3,2), type=c("n","n","s","s","s","n"),ncp=3,name.group=c("convection_time","convection_geom","convection_int","initiation_thermo","initiation_aero","supplement_conv"),num.group.sup=c(6),graph=FALSE)
+newDF <- systems_10km[,c("sys duration","time of day","season","area","lifespan","max reflectivity","max echotop 0 dBZ","max echotop 20 dBZ","max echotop 40 dBZ","max VIL","max VII","max VIWL","GLD strokes","CAPE","CIN","bl relative humidity","v-wind shear","warm cloud depth","total aerosols","sub-50nm aerosols","reflectivity","electrical activity")]
+res.MFA<-MFA(newDF,group=c(3,2,8,5,2,2), type=c("n","n","s","s","s","n"),ncp=3,name.group=c("convection_time","convection_geom","convection_int","initiation_thermo","initiation_aero","supplement_conv"),num.group.sup=c(6),graph=FALSE)
 res.HCPC<-HCPC(res.MFA,nb.clust=5,consol=TRUE,graph=FALSE,description=TRUE,order=FALSE)
 
 # Reproducing apps
@@ -107,7 +107,7 @@ clusters_systems_10km <- res.HCPC$data.clust
 clusters_systems_10km$name <- systems_10km$name
 clusters_systems_10km$`max area` <- systems_10km$`max area`
 clusters_systems_10km %>% 
-  filter(clust %in% c(2,3,4,5)) %>% 
+  filter(clust %in% c(1,2,4,5)) %>% 
   relocate(clust) %>% 
   relocate(name) %>% 
   write.csv(
