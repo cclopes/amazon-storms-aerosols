@@ -4,7 +4,9 @@
 
 # Loading necessary scripts and packages ---------------------------------------
 library(ggalt)
-library(tidyverse)
+# library(tidyverse)
+library(magrittr)
+library(dplyr)
 library(grid)
 library(reshape2)
 library(directlabels)

@@ -227,7 +227,7 @@ c5 <- clusters_aero_systems %>%
   geom_col(alpha = 0.7, color = 'black') +
   geom_label(aes(label = value), position = position_stack(vjust = .5), fill = 'white', size = 2.5) +
   scale_fill_manual(
-    values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'yellowgreen', 'dodgerblue', 'yellow', 'midnightblue', 'azure', 'azure3'),
+    values = c('gold', 'gray', 'azure3', 'azure', 'azure3', 'azure', 'azure', 'red', 'yellowgreen', 'yellow', 'midnightblue', 'azure', 'azure3'),
     guide = "none") +
   scale_y_discrete(labels = NULL) +
   labs(x = 'Number of cases', y = '', title = paste0('Cluster 5 - ', clusters_aero_systems %>% filter(clust == 5) %>% nrow(), ' cases'))
